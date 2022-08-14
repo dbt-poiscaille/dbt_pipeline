@@ -37,4 +37,4 @@ select
 
    from {{ ref('stg_subscription_consolidation') }}
    -- where user_id='5ee60116895fb442ebeaeed4'
-   group by 1 
+   group by 1 , 2
