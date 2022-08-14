@@ -1,0 +1,104 @@
+version: 2
+
+sources:
+  - name: google_ads
+    loader: BigQuery
+    schema: google_ads
+    database: poiscaille-358510
+    tables:
+      - name: campaign_performance_report
+        tags: ['Google Adwords']
+        meta:
+          contains_pii: false
+          owner : "Web Data Team"
+      - name: video_performance_report
+        tags: ['Google Adwords']
+        meta:
+          contains_pii: false
+          owner : "Web Data Team"
+
+  - name: google_analytics
+    loader: BigQuery
+    schema: analytics_297614539
+    database: poiscaille-358510
+    tables:
+      - name: events_*
+        tags: ['Google Analytics']
+        meta:
+          contains_pii: false
+          owner : "Web Data Team"
+      - name: events_intraday_*
+        tags: ['Google Analytics']
+        meta:
+          contains_pii: false
+          owner : "Web Data Team"          
+  
+
+  - name: stripe
+    loader: BigQuery
+    schema: poiscaille_stripe
+    database: poiscaille-358510
+    tables:
+      - name: customers
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"
+      - name: invoice_items
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: subscriptions
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: charge
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"             
+      - name: coupons
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"                     
+
+  - name: mongodb
+    loader: BigQuery
+    schema: poiscaille_mongodb
+    database: poiscaille-358510
+    tables:
+      - name: place
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"
+      - name: product
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: sale
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: subscription
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: user
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"      
+      - name: stock
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"              
+  
+  
