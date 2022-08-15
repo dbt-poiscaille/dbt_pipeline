@@ -54,7 +54,7 @@ sources:
         meta:
           contains_pii: true
           owner : "Sales & SAV"      
-      - name: charge
+      - name: charges
         tags: ['Stripe']
         meta:
           contains_pii: true
