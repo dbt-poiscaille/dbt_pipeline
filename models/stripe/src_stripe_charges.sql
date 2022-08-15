@@ -41,4 +41,5 @@ SELECT
   shipping.address.state,
   shipping.address.postal_code
 FROM
-{{ source('stripe', 'charge') }}
+{{ source('stripe', 'charges') }}
+where status = 'succeeded'
