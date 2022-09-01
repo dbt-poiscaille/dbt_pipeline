@@ -5,9 +5,7 @@
    )
 }}
 
-
-
-SELECT
+select
  distinct 
   _id AS stock_id,
   item.product.name AS product_name,
@@ -28,7 +26,7 @@ SELECT
   cost.ht,
   _sdc_table_version,
   item.image._id AS image_id,
-  item.image.url,
+  item.image.url as item_image_url,
   item.supplier.carrier,
   item.supplier.name AS supplier_name,
   item.supplier._id AS supplier_id,
@@ -38,6 +36,5 @@ SELECT
   createdat,
   arrivalpart,
   updatedat,
-  _sdc_table_version
 from 
  {{ source('mongodb', 'stock') }}
