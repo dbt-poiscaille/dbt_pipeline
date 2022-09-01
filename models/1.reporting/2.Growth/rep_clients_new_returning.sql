@@ -11,7 +11,7 @@ SELECT
   stripe_customer_id,
   round((cast(charges_amount as int64)/100),2)  as amount,
   charge_type,
-  nom_region
+  pr_region as nom_region
  from {{ ref('stg_charges_consolidation') }}
 
   where stripe_customer_id is not null 

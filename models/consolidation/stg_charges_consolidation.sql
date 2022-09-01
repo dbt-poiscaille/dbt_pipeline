@@ -183,16 +183,26 @@ UNION ALL
 SELECT '95228','Île-de-France'
 ORDER BY code_postal ASC 
 
+), 
+
+place_info as ( 
+SELECT
+  _id,
+  name,
+  lat,
+  lng
+FROM {{ ref('src_mongodb_place')}}  
 )
 
 
 SELECT 
+ distinct 
 charge_date,
   charge_id, 
   description,
   plan_product,
   charge_details.charge_type_details AS charge_type,
-  charge_details.amount_details AS charges_amount,
+  round(charge_details.amount_details/100,2) AS charges_amount,
   stripe_customer_id, 
   amount_refunded,    
   subscription_id,
@@ -202,20 +212,27 @@ charge_date,
   charges_invoice,
   type, 
   invoice_subscription,
-  place_id,
-  place_name,
-  place_createdat,
-  place_updatedat,
-  place_description,
-  postal_code,
-  region.code_postal as region_code_postal, 
-  region.nom_region
+  place_id as pr_id,
+  place_name as pr_name,
+  --place_createdat as pr_creat,
+  --place_updatedat,
+  place_description as pr_adresse,
+  postal_code as pr_code_postal,
+  --region.code_postal as region_code_postal, 
+  region.nom_region  as pr_region, 
+  'France' as pr_country, 
+  place_info.lat, 
+  place_info.lng, 
+  TRIM(SPLIT(place_description, ',')[OFFSET(1)]) as city , 
+  SUBSTR(TRIM(SPLIT(place_description, ',')[OFFSET(1)]), -6) as info
 
 FROM 
 charges_with_subscription_and_invoice_detailed, 
 UNNEST(charge_details) charge_details
 left join region
 on charges_with_subscription_and_invoice_detailed.postal_code = region.code_postal
+left join place_info 
+on charges_with_subscription_and_invoice_detailed.place_id = place_info._id
 
 
 

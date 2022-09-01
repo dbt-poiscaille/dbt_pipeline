@@ -32,7 +32,11 @@ select
     quantity__fl as place_quantity__fl, 
     closing_raison as place_closing_raison , 
     closing_to as place_closing_to, 
-    closing_from as place_closing_from
+    closing_from as place_closing_from, 
+    shipping.pickup as shipping_pickup,
+    shipping.delay as shipping_delay, 
+    shipping.company as shipping_company
+
 
  from {{ ref('src_mongodb_place') }}
 ) , 
@@ -55,6 +59,7 @@ select
     place_id, 
     place_name, 
     place_owner, 
+    TRIM(SPLIT(place_address, ',')[SAFE_OFFSET(1)]) as place_city , 
     place_address, 
     place_codepostal, 
     code_postal,
@@ -62,6 +67,9 @@ select
     place_lat , 
     place_geocode, 
     place_createdat, 
+    shipping_pickup , 
+    shipping_delay , 
+    shipping_company , 
     date_diff(current_date(), cast(place_createdat as date), day) as days_since_in_bdd,
     date_diff(current_date(), cast(place_createdat as date), month) as months_since_in_bdd,
     date_diff(current_date(), cast(place_createdat as date ), year) as year_since_in_bdd,

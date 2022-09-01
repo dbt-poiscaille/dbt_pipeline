@@ -45,6 +45,7 @@ SELECT
   case when depositschedule ='' then NULL else depositschedule end as depositschedule,
   case when dedicated ='' then NULL else dedicated end as dedicated,
   extraopenings, 
+  shipping,
   --extraopenings.value.date,
   --extraopenings.value.schedule,
   --extraopenings.value.createdat,

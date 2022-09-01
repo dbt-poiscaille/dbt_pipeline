@@ -5,7 +5,4 @@
    )
 }}
 
-
-
-select * from {{ ref('stg_charges_consolidation') }}
-where charges_amount > 0 
+select * from {{ ref('stg_detail_products_sales') }}
