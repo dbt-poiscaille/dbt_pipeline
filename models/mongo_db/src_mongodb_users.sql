@@ -16,12 +16,11 @@ select
   email,
   createdat,
   updatedat,
-  _sdc_received_at,
   _sdc_sequence,
   phone,
   comments,
   newsletter,
   last4,
   iat,
-  godsons
+  --godsons.value as godsons
   from {{ source('mongodb', 'user') }}
