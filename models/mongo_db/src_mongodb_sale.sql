@@ -44,16 +44,16 @@ SELECT
   payment.refundedprice.ttc,
   payment.refundedprice.currency,
   payment.refundedprice.ht,
-    offerings.value.price.ttc AS offerings_value_price_ttc,
-    offerings.value.price.tax AS offerings_value_price_tax,
-    offerings.value.price.currency AS offerings_value_price_currency,
-    offerings.value.price.ht AS offerings_value_price_ht,
-    offerings.value.count AS offerings_value_count,
-    offerings.value.name AS offerings_value_name,
-    offerings.value.channel AS  offerings_value_channel,
-    offerings.value._id AS  offerings_value_id,
-    offerings.value.items AS offerings_value_items,
-    offerings.value.refunded AS  offerings_value_refunded,
+  offerings.value.price.ttc AS offerings_value_price_ttc,
+  offerings.value.price.tax AS offerings_value_price_tax,
+  offerings.value.price.currency AS offerings_value_price_currency,
+  offerings.value.price.ht AS offerings_value_price_ht,
+  offerings.value.count AS offerings_value_count,
+  offerings.value.name AS offerings_value_name,
+  offerings.value.channel AS  offerings_value_channel,
+  offerings.value._id AS  offerings_value_id,
+  offerings.value.items AS offerings_value_items,
+  offerings.value.refunded AS  offerings_value_refunded,
  from  {{ source('mongodb', 'sale') }},UNNEST(offerings) offerings
 )
 SELECT *,
@@ -92,3 +92,11 @@ offerings_value_items.value.supplier.url AS offerings_value_items_value_supplier
 offerings_value_items.value.description AS offerings_value_items_value_description
   FROM sale_data,
    UNNEST(offerings_value_items) offerings_value_items
+
+
+
+
+
+
+
+   

@@ -21,7 +21,7 @@ select
       count(distinct case when event_name ='screenInteraction' and  (select value.string_value from unnest(event_params) where key = 'checkout_category')='subscriptionFunnel' then user_pseudo_id end) as subscriptionFunnel,
       count(distinct case when event_name ='screenInteraction' and  (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' then user_pseudo_id end) as outsideFunnel,
       count(distinct case when event_name ='screenInteraction' and  (select value.string_value from unnest(event_params) where key = 'checkout_category')='shopFunnel' then user_pseudo_id end) as shopFunnel,
-      count(distinct case when event_name ='screenInteraction' and  (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' then user_pseudo_id end) as outsideFunnel,
+      --count(distinct case when event_name ='screenInteraction' and  (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' then user_pseudo_id end) as outsideFunnel,
       count(distinct case when event_name ='screenInteraction' 
            and (select value.string_value from unnest(event_params) where key = 'checkout_category')='subscriptionFunnel' 
            and  (select value.string_value from unnest(event_params) where key = 'event_action')='searchPlace' then user_pseudo_id end) as subscription_funnel_searchPlace,
@@ -50,15 +50,16 @@ select
 
       count(distinct case when event_name ='screenInteraction' 
            and (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' 
-           and  (select value.string_value from unnest(event_params) where key = 'event_action')='viewPlace' then user_pseudo_id end) as outside_funnel_searchPlace,
+           and  (select value.string_value from unnest(event_params) where key = 'event_action')='viewPlace' then user_pseudo_id end) as outside_funnel_viewPlace,
 
       count(distinct case when event_name ='screenInteraction' 
            and (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' 
-           and  (select value.string_value from unnest(event_params) where key = 'event_action')='selectPlace' then user_pseudo_id end) as outside_funnel_searchPlace,
+           and  (select value.string_value from unnest(event_params) where key = 'event_action')='selectPlace' then user_pseudo_id end) as outside_funnel_selectPlace,
 
       count(distinct case when event_name ='screenInteraction' 
            and (select value.string_value from unnest(event_params) where key = 'checkout_category')='outsideFunnel' 
-           and  (select value.string_value from unnest(event_params) where key = 'event_action')='login' then user_pseudo_id end) as outside_funnel_searchPlace
+           and  (select value.string_value from unnest(event_params) where key = 'event_action')='login' then user_pseudo_id end) as outside_funnel_login
 
     FROM {{ ref('scr_ga_global_data') }}
     group by 1,2,3,4,5
+    order by event_date desc 

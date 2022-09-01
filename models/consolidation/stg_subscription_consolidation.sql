@@ -8,9 +8,10 @@
 
 with mongo_data as (
 SELECT
-  user._id as user_id,
-  user.email,
-  _id as subscription_id,
+  user_id ,
+  user_email,
+  id ,
+  stripe_id,
   cast(subscribed as date) as subscription_date_mongo,
   date_diff(current_date(), cast(subscribed as date), day) as subscription_days,
   date_diff(current_date(), cast(subscribed as date), month) as subscription_months,
@@ -19,20 +20,16 @@ SELECT
   price,
   startingat,
   case when startingat is null then 'Cancelled' else 'Active' end as subsription_status,
-  place.shipping.pickup,
-  place.shipping.company,
-  place._id as place_id,
-  place.details,
-  place.name,
-  stripe_id,
+  place_id ,
+  place_name,
   rate,
   quantity,
-  allergies.oysters,
-  allergies.crustaceans,
-  allergies.shells,
-  allergies.fishes,
-  allergies.others,
-  allergies.invalid
+  allergies_oysters  ,
+  allergies_crustaceans  ,
+  allergies_shells ,
+  allergies_fishes  ,
+  allergies_others ,
+  allergies_invalid, 
 from
    {{ ref('src_mongodb_subscriptions')}}  
 ),
@@ -44,14 +41,14 @@ stripe_data as (
   id as subscription_id_stripe,
   customer as customer_stripe, 
   cast (start_date as date) as subscription_date_stripe,
-  plan.id as subscription_type_stripe,
-  plan.interval as subscription_intervall_stripe,
-  plan.interval_count as subscription_interval_count_stripe,
-  plan.amount as subscription_price_stripe,
-  plan.name as subscription_name_stripe
+  plan_id as subscription_type_stripe,
+  plan_interval as subscription_intervall_stripe,
+  plan_interval_count as subscription_interval_count_stripe,
+  plan_amount as subscription_price_stripe,
+  plan_name as subscription_name_stripe
 from
  {{ ref('src_stripe_subscriptions')}}  
-where plan.name is not null 
+where plan_name is not null 
 ) , 
 
 place_data as ( 

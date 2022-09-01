@@ -33,7 +33,13 @@ sources:
           contains_pii: false
           owner : "Web Data Team"          
   
-
+  - name: external
+    loader: BigQuery
+    schema: external
+    database: poiscaille-358510
+    tables:
+      - name: communes_departement_region
+    
   - name: stripe
     loader: BigQuery
     schema: poiscaille_stripe
@@ -63,7 +69,20 @@ sources:
         tags: ['Stripe']
         meta:
           contains_pii: true
-          owner : "Sales & SAV"                     
+          owner : "Sales & SAV"    
+
+      - name: invoice_line_items
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV" 
+               
+      - name: balance_transactions
+        tags: ['Stripe']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"     
+
 
   - name: mongodb
     loader: BigQuery
