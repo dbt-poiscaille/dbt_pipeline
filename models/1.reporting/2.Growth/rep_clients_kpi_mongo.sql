@@ -25,7 +25,7 @@ from
     {{ ref('src_mongodb_users') }}
 ),
 subscription AS (
-SELECT user_id,
+SELECT user_id as user_id_subscription,
 allergies_oysters,
 subscription_date_mongo AS subscription_date,
 subscription_status,
@@ -48,7 +48,7 @@ WHERE rn =1
 
 sale_data AS (
      SELECT 
-        user_id, 
+        user_id as user_id_sale_data, 
         place_name, 
         place_id , 
         place_address, 
@@ -72,7 +72,7 @@ sale_data AS (
         sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count(case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end) as panier_moyen_hors_casier
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1,2,3,4,5)
-SELECT * FROM user_data LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id
-LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id
+SELECT * FROM user_data LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id_subscription
+LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
 WHERE monetary IS NOT NULL
 ORDER BY subscription_date
