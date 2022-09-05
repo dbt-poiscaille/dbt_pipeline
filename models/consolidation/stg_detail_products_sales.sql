@@ -43,7 +43,7 @@ select
   invoiceitemid,
   chargeid,
   status,
-  ttc,
+  --ttc,
   currency,
   ht,
   offerings_value_price_ttc,

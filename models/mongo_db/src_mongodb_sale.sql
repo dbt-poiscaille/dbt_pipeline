@@ -41,7 +41,7 @@ SELECT
   payment.stripe.invoiceitemid,
   payment.stripe.chargeid,
   payment.status,
-  payment.refundedprice.ttc,
+  payment.refundedprice.ttc AS refundedprice,
   payment.refundedprice.currency,
   payment.refundedprice.ht,
   offerings.value.price.ttc AS offerings_value_price_ttc,
@@ -99,9 +99,3 @@ offerings_value_items.value.description AS offerings_value_items_value_descripti
 
   FROM sale_data,
    UNNEST(offerings_value_items) offerings_value_items
-
-
-
-
-
-   

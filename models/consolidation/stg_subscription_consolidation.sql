@@ -17,7 +17,7 @@ SELECT
   formula,
   price,
   startingat,
-  case when startingat is null then 'Cancelled' else 'Active' end as subsription_status,
+  case when startingat is null then 'Cancelled' else 'Active' end as subscription_status,
   place_id ,
   place_name,
   rate,
