@@ -7,10 +7,9 @@
 
 /* Prendre la dernière version des infos mises à jour pour chaque supplier */
 
-SELECT
+with data_user_mongo as (
+select 
   _id,
-  --deposit.name #nan,
-  --deposit.description #nan,
   description,
   right(description,5) as postalcode,
   lng,
@@ -63,7 +62,18 @@ SELECT
 from 
    {{ source('mongodb', 'place') }}
 order by name asc 
+)
 
+select 
+     *,
+      case 
+        when openings_day = 'Thursday' then 'Jeudi' 
+        when openings_day = 'Friday' then 'Vendredi' 
+        when openings_day = 'Tuesday' then 'Mardi' 
+        when openings_day = 'Wednesday' then 'Mercredi' 
+        when openings_day = 'Saturday' then 'Samedi' 
+        end as openings_day_fr
+    from data_user_mongo      
 
 
 

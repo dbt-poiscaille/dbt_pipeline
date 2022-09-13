@@ -54,7 +54,7 @@ select
   user._id as user_id,
   user.email as user_email,
   freedelivery,
-  subscribed,
+  startingat as subscribed,
   upcoming.status AS upcoming_status,
   upcoming.deposit.place._id as deposit_place_id,
   upcoming.deposit.deliveryat AS upcoming_deposit_deliveryat,

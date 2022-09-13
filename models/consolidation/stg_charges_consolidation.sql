@@ -43,6 +43,7 @@ SELECT
  ROW_NUMBER() OVER(PARTITION BY id ORDER BY _sdc_extracted_at DESC) AS rn 
  FROM {{ ref('src_stripe_charges')}}  
 WHERE  status = 'succeeded' ),
+
 final_charges AS (
 SELECT 
       created,
@@ -71,6 +72,8 @@ invoice_line_items AS (
  ROW_NUMBER() OVER(PARTITION BY invoice ORDER BY _sdc_extracted_at DESC) AS rn
   FROM {{ ref('src_stripe_invoice_line_items')}}  
 ),
+
+
 invoice_line_items_distinct AS (
 SELECT  invoice,type, invoice_subscription, plan_product,description FROM invoice_line_items WHERE rn = 1),
 subscription as (

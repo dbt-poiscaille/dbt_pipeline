@@ -5,7 +5,7 @@
    )
 }}
 
-select
-*
-from 
- {{ source('mongodb', 'stock') }}
+select 
+* 
+from {{ ref('rep_clients_kpi_mongo') }}
+order by user_id asc 
