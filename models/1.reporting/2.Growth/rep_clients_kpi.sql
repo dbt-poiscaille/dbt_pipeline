@@ -22,8 +22,6 @@ select
   email,
   phone,
   createdat,
-  updatedat,
-  _sdc_sequence,
   comments,
   newsletter,
   last4,

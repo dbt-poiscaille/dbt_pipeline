@@ -34,7 +34,7 @@ select
   subscription_price,
   subscription_id,
   margin,
-  margin__st,
+  --margin__st,
   price_ttc,
   price_currency,
   price_ht,

@@ -71,7 +71,7 @@ FROM
           trim(replace(cp_name, 'Coupon','')) as cp_name, 
           nb_customer, 
           total_amount
-     from {{ ref('stg_coupons_consolidation') }}
+     from {{ ref('stg_coupons_consolidation_place') }}
  ), 
 
  final_table AS 

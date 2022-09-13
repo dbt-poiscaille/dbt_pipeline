@@ -18,7 +18,6 @@ select
   subscription_id,
   case when subscription_id is null then 'order' else 'locker' end as sale_type,
   margin,
-  margin__st, 
   margin__fl, 
   price_ttc, 
   price_ht, 
@@ -51,12 +50,10 @@ select
      subscription_id,
      sale_type,
      margin,
-     margin__st, 
      margin__fl, 
      case 
-         when margin is not null and margin__fl is null and margin__st is null then margin 
-         when margin__fl is not null and margin is null and margin__st is null then margin__fl
-         --when margin__st is not null and margin is null and margin__fl is null then margin__st
+         when margin is not null and margin__fl is null then margin 
+         when margin__fl is not null and margin is null then margin__fl
          end as margin_final,    
      offerings_value_channel,     
      round(sum(price_ttc)/100,2) as price_ttc, 
@@ -73,7 +70,7 @@ select
      --offerings_value_items_value_cost_unit,
      --offerings_value_items_value_product_name
  from data_locker
-   group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14
+   group by 1,2,3,4,5,6,7,8,9,10,11,12,13
 ) ,
 
 consolidation as (
