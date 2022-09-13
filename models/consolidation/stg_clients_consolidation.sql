@@ -5,9 +5,7 @@
    )
 }}
 
-
 with data_consolidation_users as (
-
 select
   _id as user_id_mongodb,
   customer as user_id_stripe,
@@ -21,8 +19,8 @@ select
   email,
   phone,
   createdat,
-  updatedat,
-  _sdc_sequence,
+  --updatedat,
+  --_sdc_sequence,
   comments,
   newsletter,
   last4,
@@ -74,4 +72,25 @@ select
      * from data_consolidation_users 
      left join data_consolidation_stripe
      on data_consolidation_users.email = data_consolidation_stripe.receipt_email 
-order by user_id_mongodb asc      
+order by user_id_mongodb asc   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

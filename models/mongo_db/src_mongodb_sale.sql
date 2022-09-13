@@ -4,7 +4,6 @@
     labels = {'type': 'mongodb', 'contains_pie': 'no', 'category':'source'}  
    )
 }}
-
 WITH sale_data as (
 SELECT
   _id AS sale_id,
@@ -31,8 +30,9 @@ SELECT
   subscription.rate as subscription_rate,
   subscription.price as subscription_price,
   subscription._id AS subscription_id,
-  payment.margin,
-  payment.margin__st,
+  cast(payment.margin as int64) as margin,
+  --cast(payment.margin__st as int64) as margin__st,
+  cast(payment.margin__fl as int64) as margin__fl,
   payment.price.ttc as price_ttc,
   payment.price.currency as price_currency,
   payment.price.ht as price_ht,
@@ -99,3 +99,9 @@ offerings_value_items.value.description AS offerings_value_items_value_descripti
 
   FROM sale_data,
    UNNEST(offerings_value_items) offerings_value_items
+
+
+
+
+
+

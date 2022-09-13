@@ -19,7 +19,7 @@ SELECT
   email,
   createdat,
   subscription_id,
-  price_ttc,
+  round(cast(price_ttc as int64)/100,2) as price_ttc,
   refundedprice,
   customerid,
   subscriptionid, 
@@ -64,7 +64,8 @@ place_openings_hidden,
 place_openings_day, 
 place_openings_depositschedule, 
 nom_departement, 
-nom_region
+nom_region,
+zone
 FROM  {{ ref('stg_mongo_place_consolidation') }})
 SELECT sale_data.*, 
 place_name, 
@@ -93,5 +94,6 @@ place_openings_hidden,
 place_openings_day, 
 place_openings_depositschedule, 
 nom_departement, 
-nom_region
+nom_region,
+zone
 FROM sale_data LEFT JOIN place_data ON sale_data.place_id = place_data.place_id

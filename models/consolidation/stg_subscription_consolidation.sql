@@ -6,6 +6,7 @@
 }}
 
 SELECT
+ distinct 
   user_id ,
   user_email,
   id ,
@@ -16,7 +17,7 @@ SELECT
   date_diff(current_date(), cast(subscribed as date), year) as subscription_year,
   formula,
   price,
-  startingat,
+  --startingat,
   case when startingat is null then 'Cancelled' else 'Active' end as subscription_status,
   place_id ,
   place_name,
