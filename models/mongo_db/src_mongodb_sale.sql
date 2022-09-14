@@ -10,6 +10,8 @@ SELECT
   channel,
   delivery.deliveryat,
   delivery.shippingat,
+  DATE_TRUNC(cast(delivery.shippingat as date), WEEK(MONDAY)) as first_day_week,
+  LAST_DAY(cast(delivery.shippingat as date), WEEK(MONDAY)) as last_day_week,       
   delivery.place._id as place_id,
   delivery.place.name,
   delivery.place.description,

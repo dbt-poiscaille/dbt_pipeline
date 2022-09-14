@@ -39,8 +39,8 @@ select
   last4,
   iat,
   godsons.value as godson 
-  from {{ source('mongodb', 'user') }},
-  unnest (godsons) godsons
+  from {{ source('mongodb', 'user') }}
+  left join unnest (godsons) godsons
 )
 
 select 
@@ -50,3 +50,9 @@ select
     concat('+33',substr(cast(phone_mobile as string),2,10)) as phone_mobile_f ,
     from user_data
     order by _id asc 
+
+
+
+
+ 
+    

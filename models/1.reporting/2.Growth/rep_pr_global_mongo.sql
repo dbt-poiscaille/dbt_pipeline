@@ -9,18 +9,21 @@ with place_consolidation as (
 select
 place_id, 
 COUNT (DISTINCT(case when type_sale = 'abonnement' then user_id end)) AS nb_subscribers,
-sum(case when type_sale = 'abonnement' then price_ttc end ) as total_ca_subscriptions,
-sum(case when type_sale = 'shop' then price_ttc end ) as total_ca_shop,
-sum(case when type_sale = 'Petit plus' then price_ttc end ) as total_ca_petitplus,
+round(sum(case when type_sale = 'abonnement' then offerings_value_price_ttc end )/100,2) as total_ca_subscriptions,
+round(sum(case when type_sale = 'shop' then offerings_value_price_ttc  end )/100,2) as total_ca_shop,
+round(sum(case when type_sale = 'Petit plus' then offerings_value_price_ttc end )/100,2) as total_ca_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' then sale_id end)) AS nb_vente_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' or type_sale = 'shop'  then sale_id end)) AS nb_vente_hors_abo,
-SUM(price_ttc) AS total_ca
+round(SUM(offerings_value_price_ttc)/100,2) AS total_ca , 
+round((SUM(offerings_value_price_ttc)/count(distinct sale_id))/100,2) as pan_moy  , 
+round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then offerings_value_price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end))/100,2) as panier_moyen_hors_casier
+
 -- montant des remboursements
 -- Panier Moyen hors ca
 FROM {{ ref('stg_mongo_sale_consolidation') }} 
 WHERE place_id IS NOT NULL
 GROUP BY 1
-) , 
+) ,  
 place_info as (
 
 select 
@@ -58,7 +61,9 @@ distinct
   nom_departement,
   nom_region,
   zone, 
-  case when nom_region = 'Île-de-France' then 'IDF' else 'Région' end as place_location
+  case when nom_region = 'Île-de-France' then 'IDF' else 'Région' end as place_location,
+  'France' as place_country, 
+  'PR' as place_type
   FROM {{ ref('stg_mongo_sale_consolidation') }} 
 
 )
@@ -97,7 +102,9 @@ select
   nom_departement,
   nom_region,
   zone,
-  place_location
+  place_location,
+  place_country,
+  place_type
   from place_consolidation
   left join place_info
   on place_consolidation.place_id = place_info.place_id 

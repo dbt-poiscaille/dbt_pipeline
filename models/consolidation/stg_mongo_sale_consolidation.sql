@@ -7,9 +7,13 @@
 
 
 WITH  sale_data AS (
-SELECT 
+select  
+ distinct 
+  shippingat,
+  DATE_ADD(cast(shippingat as date), INTERVAL 1 DAY) as sale_date,
+  DATE_TRUNC(cast(shippingat as date), WEEK(MONDAY)) as first_day_week,
+  LAST_DAY(cast(shippingat as date), WEEK(MONDAY)) as last_day_week,        
   sale_id,
-  channel,
   place_id, 
   company, 
   firstname,
@@ -24,16 +28,25 @@ SELECT
   customerid,
   subscriptionid, 
   subscription_total_casiers,
-  offerings_value_name,
-  offerings_value_items_value_product_name,
-  offerings_value_items_value_product_id,
-  offerings_value_items_value_product_type,
+  channel,
+  offerings_value_channel,
   CASE WHEN channel = 'shop' THEN 'shop'
       WHEN channel = 'combo' and offerings_value_channel = 'combo' THEN 'abonnement'
       WHEN channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-  END AS type_sale
+  END AS type_sale,  
+  offerings_value_price_ttc,
+  offerings_value_price_tax,
+  offerings_value_price_ht,
+  --subscription_price,  
+  --offerings_value_name,
+  --offerings_value_items_value_product_name,
+  --offerings_value_items_value_product_id,
+  --offerings_value_items_value_product_type,
   
-  FROM  {{ ref('src_mongodb_sale') }} ),
+  FROM  {{ ref('src_mongodb_sale') }} 
+    --where user_id = '5fa036396eabf371a0fb9a93'
+  order by subscription_total_casiers asc 
+  ),
   
 place_data AS (
 SELECT
