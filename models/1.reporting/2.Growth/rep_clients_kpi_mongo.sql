@@ -98,7 +98,8 @@ sale_data AS (
         round(sum(offerings_value_price_ttc)/100,2) as ca_global,
         max(subscription_total_casiers) as nb_casiers,
         round(sum(offerings_value_price_ttc)/count(distinct sale_id)/100,2) as pan_moy,
-        round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then offerings_value_price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end))/100,2) as panier_moyen_hors_casier
+        round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then offerings_value_price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end))/100,2) as panier_moyen_hors_casier_1,
+        round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then offerings_value_price_ttc end )/count( distinct sale_id)/100,2) as panier_moyen_hors_casier_2
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1)
 
