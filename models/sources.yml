@@ -118,6 +118,11 @@ sources:
         tags: ['MongoDb']
         meta:
           contains_pii: true
-          owner : "Sales & SAV"              
+          owner : "Sales & SAV"    
+      - name: offering
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"           
   
   
