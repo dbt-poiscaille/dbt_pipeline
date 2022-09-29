@@ -123,7 +123,7 @@ SELECT sale_data.*,
   nom_region,
   zone
 FROM sale_data LEFT JOIN place_data ON sale_data.place_id = place_data.place_id
-where sale_id = '62cc5b3a9a26adf00ba40d58'
+--where sale_id = '62cc5b3a9a26adf00ba40d58'
 order by sale_date desc ,  sale_id asc 
 
 
