@@ -23,18 +23,24 @@ select
   email,
   createdat,
   subscription_id,
-  round(cast(price_ttc as int64)/100,2) as price_ttc,
+  --round(cast(price_ttc as int64)/100,2) as price_ttc,
+  round(cast(offerings_value_price_ttc as int64)/100,2) as price_ttc,  
   refundedprice,
   customerid,
   subscriptionid, 
+  subscription_rate,
+  case when subscription_rate = 'biweekly' then 'Livraison chaque quinzaine'
+       when subscription_rate = 'weekly' then 'Livraison chaque semaine'
+       when subscription_rate = 'fourweekly' then 'Livraison chaque mois'
+       end as subscription_type,   
   subscription_total_casiers,
   channel,
   offerings_value_channel,
-  CASE WHEN channel = 'shop' THEN 'shop'
-      WHEN channel = 'combo' and offerings_value_channel = 'combo' THEN 'abonnement'
-      WHEN channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
+  CASE WHEN channel = 'shop' THEN 'Boutique'
+      WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
+      WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
   END AS type_sale,  
-  offerings_value_price_ttc,
+  round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
   offerings_value_price_tax,
   offerings_value_price_ht,
   --subscription_price,  
@@ -44,7 +50,6 @@ select
   --offerings_value_items_value_product_type,
   
   FROM  {{ ref('src_mongodb_sale') }} 
-    --where user_id = '5fa036396eabf371a0fb9a93'
   order by subscription_total_casiers asc 
   ),
   
@@ -118,6 +123,8 @@ SELECT sale_data.*,
   nom_region,
   zone
 FROM sale_data LEFT JOIN place_data ON sale_data.place_id = place_data.place_id
+where sale_id = '62cc5b3a9a26adf00ba40d58'
+order by sale_date desc ,  sale_id asc 
 
 
 

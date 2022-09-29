@@ -9,6 +9,8 @@ with data_locker as (
 select 
   sale_id,
   shippingat,
+  offerings_value_channel,
+  channel, 
   DATE_ADD(cast(shippingat as date), INTERVAL 1 DAY) as sale_date,
   DATE_TRUNC(cast(shippingat as date), WEEK(MONDAY)) as first_day_week,
   LAST_DAY(cast(shippingat as date), WEEK(MONDAY)) as last_day_week,       
@@ -23,8 +25,7 @@ select
   margin__fl, 
   price_ttc, 
   price_ht, 
-  offerings_value_channel,
-  --offerings_value_count,
+  offerings_value_count
   --offerings_value_name,
   --offerings_value_items_value_portion_unit,
   --offerings_value_items_value_portion_quantity,
@@ -37,11 +38,11 @@ select
   name
 from
  {{ ref('src_mongodb_sale') }}
- --where sale_id = '62c28bbbb9c4380fdbeecfe7'
 ) , 
 
 final_data as (
 select 
+    distinct 
      sale_id, 
      email,
      user_id,
@@ -60,8 +61,8 @@ select
          when margin__fl is not null and margin is null then margin__fl
          end as margin_final,    
      offerings_value_channel,     
-     round(sum(price_ttc)/100,2) as price_ttc, 
-     round(sum(price_ht)/100,2) as price_ht,      
+     round(sum(offerings_value_price_ttc)/100,2) as price_ttc, 
+     round(sum(offerings_value_price_ttc)/100,2) as price_ht,      
      sum(offerings_value_price_ttc/100) as offerings_value_price_ttc ,
      --sum(offerings_value_price_ht/100) as offerings_value_price_ht,     
      --sum(offerings_value_item_value_cost_ht/100) as offerings_value_item_value_cost_ht ,
@@ -164,7 +165,7 @@ select
   left join coupon_refund
   on final_order.sale_date = coupon_refund.in_date
 
-order by final_order.sale_date desc  
+order by final_order.sale_date asc  
 
 
 

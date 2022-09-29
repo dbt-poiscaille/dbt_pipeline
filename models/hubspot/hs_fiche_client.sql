@@ -6,7 +6,7 @@
 }}
 
 select 
-* 
+ distinct * 
 from {{ ref('rep_clients_kpi_mongo') }}
 order by user_id asc 
 
