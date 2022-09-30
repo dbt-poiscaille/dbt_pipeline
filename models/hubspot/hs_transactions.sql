@@ -7,5 +7,5 @@
 
 
 select 
-
+      * 
      from {{ ref('stg_mongo_sale_consolidation') }}
