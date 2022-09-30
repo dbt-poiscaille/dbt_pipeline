@@ -25,7 +25,7 @@ select
   subscription_id,
   --round(cast(price_ttc as int64)/100,2) as price_ttc,
   round(cast(offerings_value_price_ttc as int64)/100,2) as price_ttc,  
-  refundedprice /100 as amount_refund,
+  refundedprice/100 as refundedprice,
   customerid,
   subscriptionid, 
   subscription_rate,
@@ -43,14 +43,12 @@ select
   round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
   offerings_value_price_tax,
   offerings_value_price_ht,
-  --subscription_price,  
-  --offerings_value_name,
-  --offerings_value_items_value_product_name,
-  --offerings_value_items_value_product_id,
-  --offerings_value_items_value_product_type,
-  invoiceitemid,
-  chargeid,
-  status
+  subscription_price,  
+  offerings_value_name,
+  offerings_value_items_value_product_name,
+  offerings_value_items_value_product_id,
+  offerings_value_items_value_product_type,
+  
   FROM  {{ ref('src_mongodb_sale') }} 
   order by subscription_total_casiers asc 
   ),

@@ -83,23 +83,25 @@ sale_data AS (
         max(place_openings_day) as place_openings_day,
         case when max(nom_region) = 'Île-de-France' then 'Ile-de-France' else 'Hors IdF' end as localisation, 
         max(zone) as zone_vacances_scolaire,
-        round(sum(price_details_ttc)/100,2) as monetary,
+        round(sum(price_ttc),2) as monetary,
+        count(distinct sale_id) as total_transactions, 
         count(distinct subscriptionid) as subscriptions, 
         count(subscriptionid) as subscriptions_occurence, 
         min(sale_date) as first_payment , 
-        round(sum(price_details_ttc)/100,2) as customer_revenue, 
+        round(sum(price_ttc),2) as customer_revenue, 
         max(sale_date) as last_payment ,  
-        round(sum(case when type_sale = 'abonnement' then price_details_ttc end )/100,2) as total_subscriptions,
-        round(sum(case when type_sale = 'shop' then price_details_ttc end )/100,2) as total_shop,
-        round(sum(case when type_sale = 'Petit plus' then price_details_ttc end)/100,2) as total_petitplus,
-        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE)) then price_details_ttc end )/100,2) as total_year,
-        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE))-1 then price_details_ttc end )/100,2) as total_last_year,
-        round(sum(refundedprice),2) as amount_refunded,
-        round(sum(price_details_ttc)/100,2) as ca_global,
+        round(sum(case when type_sale = 'Abonnement' then price_ttc end ),2) as total_subscriptions,
+        round(sum(case when type_sale = 'Boutique' then price_ttc end ),2) as total_shop,
+        round(sum(case when type_sale = 'Petit plus' then price_ttc end),2) as total_petitplus,
+        round(sum(price_ttc),2) as total_ca_global,
+        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE)) then price_ttc end ),2) as total_year,
+        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE))-1 then price_ttc end ),2) as total_last_year,
+        round(sum(amount_refund),2) as amount_refunded,
+        round(sum(price_ttc),2) as ca_global,
         max(subscription_total_casiers) as nb_casiers,
-        round(sum(price_details_ttc)/count(distinct sale_id)/100,2) as pan_moy,
-        round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_details_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end))/100,2) as panier_moyen_hors_casier_1,
-        round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_details_ttc end )/count( distinct sale_id)/100,2) as panier_moyen_hors_casier_2
+        round(sum(price_ttc)/count(distinct sale_id),2) as pan_moy,
+        round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier_1,
+        round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct sale_id),2) as panier_moyen_hors_casier_2
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1),
 
@@ -121,7 +123,12 @@ SELECT *,
       when place_openings_day ='Mercredi' then 'Mardi'
       when place_openings_day ='Samedi' then 'Vendredi'
       end as place_openings_day_preparation, 
-
+  case 
+      when total_transactions = 1 then 'Premiere transaction'
+      when total_transactions > 1 and total_shop > 0 and total_subscriptions = 0 then 'Client Boutique'
+      when total_transactions > 1 and total_subscriptions > 0 and user_type.user_status = 'subscriber' then 'Abonné' 
+      when total_transactions > 1 and total_ca_global > 0 and user_type.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 then 'Client Promoteur'
+      else 'Autres' end as user_phase_transaction,  
    case 
       when localisation = 'Ile-de-France' and place_openings_day = 'Jeudi' then 'Jeudi'    
       when localisation = 'Ile-de-France' and place_openings_day = 'Vendredi' then 'Vendredi'    
@@ -141,7 +148,7 @@ SELECT *,
 LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
 left join users_coupons on user_data.customer_id_stripe = users_coupons.customer
 left join user_type on user_data.user_id = user_type.user_type_user_id
---where customer_id_stripe = 'cus_Gzy1NAB2RRae79'
+--where user_id = '611ccfe11c2b876c34ea0c09'
 ORDER BY user_id asc 
 
 

@@ -1,5 +1,3 @@
-
-
 {{
   config(
     materialized = 'table',
@@ -130,18 +128,3 @@ FROM
  select *  except(rn) from final_table 
 where rn = 1
 order by place_id asc 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
