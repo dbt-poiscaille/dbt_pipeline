@@ -25,7 +25,7 @@ select
   subscription_id,
   --round(cast(price_ttc as int64)/100,2) as price_ttc,
   round(cast(offerings_value_price_ttc as int64)/100,2) as price_ttc,  
-  refundedprice,
+  refundedprice/100 as refundedprice,
   customerid,
   subscriptionid, 
   subscription_rate,

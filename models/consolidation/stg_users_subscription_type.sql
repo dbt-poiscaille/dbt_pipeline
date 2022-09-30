@@ -40,6 +40,7 @@ max_data as (
          --data_info.formula,
          data_info.startingat , 
          case when data_info.startingat is null then '92366307' else 'subscriber' end as user_status,
+         -- check client ( ancien client boutique, personne n'ayant rien acheté depuis 3 mois )
          data_info.update_at ,
          max_data._sdc_sequence as _sdc_sequence,
          RANK() OVER ( PARTITION BY data_info.user_id ORDER BY data_info.update_at ) AS rank
