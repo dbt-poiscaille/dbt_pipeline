@@ -43,7 +43,7 @@ select
   round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
   offerings_value_price_tax,
   offerings_value_price_ht,
-  --subscription_price,  
+  subscription_price,  
   --offerings_value_name,
   --offerings_value_items_value_product_name,
   --offerings_value_items_value_product_id,

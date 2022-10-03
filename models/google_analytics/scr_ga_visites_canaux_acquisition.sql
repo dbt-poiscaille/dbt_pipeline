@@ -1,7 +1,7 @@
 {{
   config(
     materialized = 'table',
-    labels = {'type': 'stripe', 'contains_pie': 'yes', 'category':'source'}  
+    labels = {'type': 'google_analytics', 'contains_pie': 'yes', 'category':'source'}  
    )
 }}
 
@@ -59,7 +59,7 @@ select
  )
 
  select 
-      event_date, 
+      PARSE_DATE('%Y%m%d', event_date) AS event_date,
       device_category, 
       medium,
       campaign, 
@@ -81,8 +81,7 @@ select
       sum(first_visit) as session_firt_visit
     from consolidation_int
       group by 1,2,3,4,5,6,7,8
-
-
+   order by event_date desc 
 
 
 

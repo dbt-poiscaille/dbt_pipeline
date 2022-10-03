@@ -135,6 +135,8 @@ SELECT
 
   subscription_distinct.price as subscription_price,
   amount_refunded,    
+      refunded,
+      captured,   
   customer as stripe_customer_id,
   subscription_id,
   stripe_id,
@@ -207,6 +209,8 @@ charge_date,
   charge_details.charge_type_details AS charge_type,
   round(charge_details.amount_details/100,2) AS charges_amount,
   stripe_customer_id, 
+        refunded,
+      captured,   
   round(amount_refunded/100,2) AS amount_refunded, 
   subscription_id,
   stripe_id,
@@ -236,7 +240,7 @@ left join region
 on charges_with_subscription_and_invoice_detailed.postal_code = region.code_postal
 left join place_info 
 on charges_with_subscription_and_invoice_detailed.place_id = place_info._id
-
+order by charge_date desc 
 
 
 

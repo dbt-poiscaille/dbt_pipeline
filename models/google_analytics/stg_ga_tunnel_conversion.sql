@@ -16,5 +16,6 @@ select distinct
     (select value.string_value from unnest(event_params) where key = 'subscription_rate') as subscription_rate    
     
     FROM {{ ref('scr_ga_global_data') }}
- where event_name = 'screenInteraction' 
+ where event_name in ('screenInteraction','orderComplete', 'addToCart', 'checkout')
+ --and (select value.string_value from unnest(event_params) where key = 'checkout_category') = 'subscriptionFunnel'
  order by event_date desc 
