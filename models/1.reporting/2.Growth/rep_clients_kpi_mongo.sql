@@ -10,6 +10,7 @@
 WITH user_data AS (
 select 
 _id as user_id,
+concat ( 'https://poiscaille.fr/kraken/client/', _id) as link_kraken,
 (concat(UPPER(lastname),' ',INITCAP(firstname))) as name,
 INITCAP(firstname) as firstname,
 INITCAP(lastname) as lastname,
@@ -29,7 +30,7 @@ role,
   max(formula) as formula
 from
     {{ ref('src_mongodb_users') }}
- group by 1,2,3,4,5,6,7,8,9
+ group by 1,2,3,4,5,6,7,8,9,10
 ),
 
 
@@ -68,6 +69,19 @@ users_coupons as (
       last_coupon
      from  {{ ref('stg_coupons_users_consolidation') }}
 ),
+
+stripe_ca_refund as (
+
+  SELECT
+  stripe_customer_id,
+  receipt_email,
+  round(sum(charges_amount),2) as ca_global_stripe,
+  round(sum(amount_refunded),2) as refund_global_stripe,  
+from 
+ {{ ref('stg_charges_consolidation') }}
+group by 1,2
+), 
+
 
 sale_data AS (
      SELECT 
@@ -148,6 +162,7 @@ SELECT *,
 LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
 left join users_coupons on user_data.customer_id_stripe = users_coupons.customer
 left join user_type on user_data.user_id = user_type.user_type_user_id
+left join stripe_ca_refund on user_data.customer_id_stripe = stripe_ca_refund.stripe_customer_id
 --where user_id = '611ccfe11c2b876c34ea0c09'
 ORDER BY user_id asc 
 
