@@ -6,7 +6,8 @@
 }}
 
 with data_locker as (
-select 
+select
+  distinct
   sale_id,
   shippingat,
   offerings_value_channel,
@@ -17,15 +18,18 @@ select
   subscription_status,
   offerings_value_price_ttc,
   --offerings_value_price_tax,
-  --offerings_value_price_ht,
+  offerings_value_price_ht,
   subscription_price,
   subscription_id,
-  case when subscription_id is null then 'order' else 'locker' end as sale_type,
+  CASE WHEN channel = 'shop' THEN 'Boutique'
+    WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
+    WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
+  end as sale_type,
   margin,
   margin__fl, 
   price_ttc, 
   price_ht, 
-  offerings_value_count
+  offerings_value_count,
   --offerings_value_name,
   --offerings_value_items_value_portion_unit,
   --offerings_value_items_value_portion_quantity,
@@ -61,13 +65,13 @@ select
          when margin__fl is not null and margin is null then margin__fl
          end as margin_final,    
      offerings_value_channel,     
+     offerings_value_count,
      round(sum(offerings_value_price_ttc)/100,2) as price_ttc, 
-     round(sum(offerings_value_price_ttc)/100,2) as price_ht,      
+     round(sum(offerings_value_price_ht)/100,2) as price_ht,      
      sum(offerings_value_price_ttc/100) as offerings_value_price_ttc ,
      --sum(offerings_value_price_ht/100) as offerings_value_price_ht,     
      --sum(offerings_value_item_value_cost_ht/100) as offerings_value_item_value_cost_ht ,
      --sum(offerings_value_items_value_cost_ttc/100) as offerings_value_items_value_cost_ttc,     
-     --offerings_value_count,
      --offerings_value_price_tax,
      --offerings_value_name,
      --offerings_value_items_value_portion_unit,
@@ -75,7 +79,7 @@ select
      --offerings_value_items_value_cost_unit,
      --offerings_value_items_value_product_name
  from data_locker
-   group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+   group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
 ) ,
 
 consolidation as (
@@ -98,32 +102,37 @@ select
          when margin_final is not null then ((100 - margin_final)/100) * (price_ttc/1.055)
          end as cogs,
      price_ttc, 
-     price_ht
+     price_ht,
+     offerings_value_count
   from final_data   
 ) ,
 
 bonus_data as (
-select 
-     sale_id,
-     sale_date,  
-     user_id,
-     name  , 
-     extract(week from sale_date) as week_number, 
-     extract(month from sale_date) as month, 
-     subscription_status,
-     subscription_price,
-     subscription_id,
-     margin_final, 
-     offerings_value_price_ttc
-from final_data
-WHERE subscription_id IS NOT NULL
-  AND offerings_value_channel ='shop'     
+select
+  sale_id,
+  sale_date,  
+  user_id,
+  name, 
+  extract(week from sale_date) as week_number, 
+  extract(month from sale_date) as month, 
+  subscription_status,
+  subscription_price,
+  subscription_id,
+  count(distinct case when sale_type ='Abonnement' then sale_id end  ) as locker, 
+  count(distinct case when sale_type ='Petit plus' then sale_id end  ) as petitplus,
+  max( case when sale_type ='Abonnement' then subscription_price end  ) as locker_price, 
+  max(case when sale_type = 'Petit plus'then price_ttc else 0 end)  as total_price,
+  max(case when sale_type = 'Petit plus'then price_ttc else 0 end) - max( case when sale_type ='Abonnement' then subscription_price end  ) as petitplus_price,
+from data_locker
+--where sale_id = '62d83d77f1b8dbeedb99c42e'
+group by 1,2,3,4,5,6,7,8,9
 ) , 
+
 bonus_consolidation as (
 select 
-   sale_date as sale_date_bonus, 
-   round(count (distinct sale_id),2) as nb_bonus,
-   round(sum(offerings_value_price_ttc)/1.055,2) as bonus_revenue, 
+   sale_date as sale_date_bonus,
+   sum(petitplus) as nb_bonus,
+   round(sum(case when petitplus > 0 then petitplus_price end)/100/1.055,2) as bonus_revenue, 
   from bonus_data
   group by 1
 ) , 
@@ -132,19 +141,20 @@ final_order as (
 select
     sale_date, 
     DATE_TRUNC(sale_date, WEEK(MONDAY)) as first_day_week,
-    LAST_DAY(sale_date, WEEK(MONDAY)) as last_day_week,       
-    week_number, 
+    LAST_DAY(sale_date, WEEK(MONDAY)) as last_day_week,
+    --add 1 to week number to agline with theory sale Kraken file       
+    week_number + 1 as week_number, 
     month, 
-    count(distinct case when sale_type ='order' then sale_id end ) as nb_order, 
-    count(distinct case when sale_type ='locker' then sale_id end ) as nb_locker,
-    count(distinct case when sale_type ='order' then user_id end ) as nb_customer_order, 
-    count(distinct case when sale_type ='locker' then user_id end ) as nb_customer_locker,     
-    round(sum( case when sale_type ='order' then price_ttc end )/1.055,2) as order_revenue_ttc, 
-    round(sum( case when sale_type ='locker' then price_ttc end )/1.055,2) as locker_revenue_ttc,
-    round(sum( case when sale_type ='order' then price_ht end ),2) as order_revenue_ht, 
-    round(sum( case when sale_type ='locker' then price_ht end ),2) as locker_revenue_ht,
-    round(sum( case when sale_type ='order' then cogs end ),2) as order_cogs, 
-    round(sum( case when sale_type ='locker' then cogs end ),2) as locker_cogs
+    count(distinct case when sale_type ='Boutique' then sale_id end ) as nb_order, 
+    count(distinct case when sale_type ='Abonnement' then sale_id end ) as nb_locker,
+    count(distinct case when sale_type ='Boutique' then user_id end ) as nb_customer_order, 
+    count(distinct case when sale_type ='Abonnement' then user_id end ) as nb_customer_locker,     
+    round(sum( case when sale_type ='Boutique' then price_ttc*offerings_value_count end )/1.055,2) as order_revenue_ttc, 
+    round(sum( case when sale_type ='Abonnement' then price_ttc end )/1.055,2) as locker_revenue_ttc,
+    round(sum( case when sale_type ='Boutique' then price_ht end ),2) as order_revenue_ht, 
+    round(sum( case when sale_type ='Abonnement' then price_ht end ),2) as locker_revenue_ht,
+    round(sum( case when sale_type ='Boutique' then cogs end ),2) as order_cogs, 
+    round(sum( case when sale_type ='Abonnement' then cogs end ),2) as locker_cogs
     from consolidation
     group by 1,2,3,4,5        
 ) , 

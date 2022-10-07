@@ -11,7 +11,7 @@ WITH user_data AS (
 select 
 _id as user_id,
 concat ( 'https://poiscaille.fr/kraken/client/', _id) as link_kraken,
-(concat(UPPER(lastname),' ',INITCAP(firstname))) as name,
+(concat(INITCAP(firstname),' ',INITCAP(lastname))) as name,
 INITCAP(firstname) as firstname,
 INITCAP(lastname) as lastname,
 role,
@@ -95,6 +95,7 @@ sale_data AS (
         max(place_city)  as place_city, 
         max(place_codepostal) as place_codepostal, 
         max(place_openings_day) as place_openings_day,
+        max(place_openings_schedule) as place_openings_schedule,
         case when max(nom_region) = 'Île-de-France' then 'Ile-de-France' else 'Hors IdF' end as localisation, 
         max(zone) as zone_vacances_scolaire,
         round(sum(price_ttc),2) as monetary,

@@ -194,15 +194,16 @@ place_info as (
 SELECT
   _id,
   name,
-  lat,
-  lng
+  -- there exists duplication in id, with different lat,lng associating
+  --lat,
+  --lng
 FROM {{ ref('src_mongodb_place')}}  
 )
 
 
 SELECT 
  distinct 
-charge_date,
+  charge_date,
   charge_id, 
   description,
   plan_product,
@@ -228,8 +229,8 @@ charge_date,
   --region.code_postal as region_code_postal, 
   region.nom_region  as pr_region, 
   'France' as pr_country, 
-  place_info.lat, 
-  place_info.lng, 
+  --place_info.lat, 
+  --place_info.lng, 
   TRIM(SPLIT(place_description, ',')[OFFSET(1)]) as city , 
   SUBSTR(TRIM(SPLIT(place_description, ',')[OFFSET(1)]), -6) as info
 
@@ -240,6 +241,7 @@ left join region
 on charges_with_subscription_and_invoice_detailed.postal_code = region.code_postal
 left join place_info 
 on charges_with_subscription_and_invoice_detailed.place_id = place_info._id
+
 order by charge_date desc 
 
 
