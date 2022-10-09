@@ -34,4 +34,5 @@ order by stripe_customer_id asc , charge_date asc
           nom_region,
           case when player_sequence = 1 then 'new_customer' else 'returning_customer' end as player_type
      from new_vs_old   
+     order by charge_date desc 
     
