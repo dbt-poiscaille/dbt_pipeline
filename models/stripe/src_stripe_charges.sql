@@ -31,6 +31,7 @@ SELECT
   source.customer as source_customer,
   source.address_country as source_address_country,
   amount,
+  amount_captured,
   amount_refunded,
   disputed,
   updated,
@@ -40,6 +41,7 @@ SELECT
   shipping.address.city AS shipping_address_city,
   shipping.address.state AS shipping_address_state,
   shipping.address.postal_code AS  shipping_address_postal_code,
+  description,
   _sdc_extracted_at
 FROM
 {{ source('stripe', 'charges') }}

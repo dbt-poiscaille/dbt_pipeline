@@ -50,8 +50,8 @@ select
        count( distinct case when event_name = 'purchase' then ga_session_id  end ) as purchase, 
        count( distinct case when event_name = 'first_visit' then ga_session_id  end ) as first_visit, 
        count( distinct case when event_name = 'session_start' then ga_session_id  end ) as session_start, 
-       count( distinct case when event_name = 'signUp' then ga_session_id  end) as signUp
-
+       count( distinct case when event_name = 'signUp' then ga_session_id  end) as signUp,
+       count( distinct case when event_name = 'signIn' then ga_session_id  end) as signIn
          from consolidation_ga
   --where ga_session_id = 1664446638
   group by 1,2,3,4,5,6,7,8
@@ -73,6 +73,8 @@ select
       count(distinct user_id) as user_id_poiscaille, 
       sum(cast(session_engaged as int64)) as session_engaged, 
       sum(interactions) as session_interactions, 
+      sum(signUp) as session_signUp ,
+      sum(signIn) as session_signIn ,
       sum(signInCheck) as session_signincheck ,
       sum(orderComplete) as session_order_complete, 
       sum(checkout) as session_checkout, 

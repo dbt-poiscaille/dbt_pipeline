@@ -11,6 +11,7 @@ SELECT
   user_email,
   id ,
   stripe_id,
+  createdat,
   cast(subscribed as date) as subscription_date_mongo,
   date_diff(current_date(), cast(subscribed as date), day) as subscription_days,
   date_diff(current_date(), cast(subscribed as date), month) as subscription_months,

@@ -20,8 +20,8 @@ select
   subscription_type,
   case when subscription_status is null or subscription_status = 'Cancelled' then false else true end as subscription_status,
   last_payment,
-  place_openings_day_livraison,
-  place_openings_day_preparation,
+  place_openings_day as place_openings_day_livraison,
+  place_openings_day_preparation
   place_openings_schedule,
   localisation,
   place_name,

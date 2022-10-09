@@ -21,7 +21,7 @@ select
         subscriptionid, 
         rank() over ( partition by user_id order by sale_date asc ) as rank
    from {{ ref('stg_mongo_sale_consolidation') }}
-   where type_sale = 'abonnement'
+   where type_sale = 'Abonnement'
    order by user_id asc , rank asc 
 ) , 
 consolidation_subscriptions as (
@@ -46,7 +46,7 @@ select
         type_sale,
         rank() over ( partition by user_id order by sale_date asc ) as rank
    from {{ ref('stg_mongo_sale_consolidation') }}
-   where type_sale = 'shop'
+   where type_sale = 'Boutique'
    order by user_id asc , rank asc 
 ), 
 
@@ -71,4 +71,5 @@ select
        from consolidation_subscriptions
        left join consolidation_shop
        on consolidation_subscriptions.sale_date = consolidation_shop.sale_date
+       order by consolidation_subscriptions.sale_date desc        
 

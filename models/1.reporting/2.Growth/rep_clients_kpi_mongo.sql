@@ -43,6 +43,7 @@ SELECT
   allergies_fishes  ,
   allergies_others ,
   allergies_invalid,
+  createdat as subscription_createdat,
   subscription_date_mongo AS subscription_date,
   subscription_status,
   rate,
@@ -69,6 +70,21 @@ users_coupons as (
       last_coupon
      from  {{ ref('stg_coupons_users_consolidation') }}
 ),
+-- Récupération de tous les clients ayant un discount (50% sur tous les casiers)
+users_discount as (
+SELECT
+  distinct 
+  id as discount_user_id,
+  email as discount_user_email ,
+  discount_coupon_id,
+  discount_coupon_name,
+  discount_coupon_percentoff,
+FROM
+  {{ ref('src_stripe_customers') }}
+WHERE
+  discount_coupon_id = 'uUm1gzIT'
+order by id asc 
+), 
 
 stripe_ca_refund as (
 
@@ -77,6 +93,7 @@ stripe_ca_refund as (
   receipt_email,
   round(sum(charges_amount),2) as ca_global_stripe,
   round(sum(amount_refunded),2) as refund_global_stripe,  
+  round(sum(charges_amount),2) - round(sum(amount_refunded),2) as final_ca_stripe
 from 
  {{ ref('stg_charges_consolidation') }}
 group by 1,2
@@ -120,13 +137,13 @@ sale_data AS (
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1),
 
-        user_type as (
-          select * from {{ ref('stg_users_subscription_type') }}
-        )
+user_type as (
+  select * from {{ ref('stg_users_subscription_type') }}
+)
 
 SELECT *,
   'France' as country, 
-  case 
+  /*case 
    when total_subscriptions is null and total_shop is null then 'lead'
    when total_subscriptions is not null then 'subscriber'
    when total_subscriptions is null and total_shop >0 then 'customer'
@@ -138,11 +155,13 @@ SELECT *,
       when place_openings_day ='Mercredi' then 'Mardi'
       when place_openings_day ='Samedi' then 'Vendredi'
       end as place_openings_day_preparation, 
+      */
   case 
-      when total_transactions = 1 then 'Premiere transaction'
-      when total_transactions > 1 and total_shop > 0 and total_subscriptions = 0 then 'Client Boutique'
+      when total_transactions = 1 and (nb_casiers = 0 or (nb_casiers = 1 and user_id_subscription is not null)) and recence < 90 then 'Premiere transaction'
+      when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or user_type.user_status_ = 'ancien client') and recence < 90 then 'Client Boutique'
       when total_transactions > 1 and total_subscriptions > 0 and user_type.user_status = 'subscriber' then 'Abonné' 
-      when total_transactions > 1 and total_ca_global > 0 and user_type.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 then 'Client Promoteur'
+      when total_transactions > 1 and total_ca_global > 2000 and user_type.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 or pan_moy > 100 then 'Client Promoteur'
+      when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'Méga-Abonné'
       else 'Autres' end as user_phase_transaction,  
    case 
       when localisation = 'Ile-de-France' and place_openings_day = 'Jeudi' then 'Jeudi'    
@@ -150,23 +169,22 @@ SELECT *,
       when localisation = 'Ile-de-France' and place_openings_day = 'Mardi' then 'Mardi'    
       when localisation = 'Ile-de-France' and place_openings_day = 'Mercredi' then 'Mercredi'    
       when localisation = 'Ile-de-France' and place_openings_day = 'Samedi' then 'Samedi' 
-      when localisation = 'Hors IdF' and place_openings_day = 'Jeudi' then 'Vendredi' 
-      when localisation = 'Hors IdF' and place_openings_day = 'Vendredi' then 'Samedi' 
-      when localisation = 'Hors IdF' and place_openings_day = 'Mardi' then 'Mercredi' 
-      when localisation = 'Hors IdF' and place_openings_day = 'Mercredi' then 'Jeudi'  
-      when localisation = 'Hors IdF' and place_openings_day = 'Samedi' then 'Dimanche'
-      end as place_openings_day_livraison,  
-         
-   -- Demander à Yves comment récupérer les données de jour de préparation
+      when localisation = 'Hors IdF' and place_openings_day = 'Jeudi' then 'Mercredi' 
+      when localisation = 'Hors IdF' and place_openings_day = 'Vendredi' then 'Jeudi' 
+      when localisation = 'Hors IdF' and place_openings_day = 'Mardi' then 'Lundi' 
+      when localisation = 'Hors IdF' and place_openings_day = 'Mercredi' then 'Mardi'  
+      when localisation = 'Hors IdF' and place_openings_day = 'Samedi' then 'Vendredi'
+      end as place_openings_day_preparation, 
+      ca_global_stripe - refund_global_stripe as reel_ca_global_stripe,
   case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type
     FROM user_data LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id_subscription
 LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
 left join users_coupons on user_data.customer_id_stripe = users_coupons.customer
 left join user_type on user_data.user_id = user_type.user_type_user_id
 left join stripe_ca_refund on user_data.customer_id_stripe = stripe_ca_refund.stripe_customer_id
+left join users_discount on user_data.customer_id_stripe = users_discount.discount_user_id 
 --where user_id = '611ccfe11c2b876c34ea0c09'
 ORDER BY user_id asc 
-
 
 
 

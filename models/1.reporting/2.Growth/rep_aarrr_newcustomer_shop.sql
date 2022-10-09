@@ -14,7 +14,7 @@ select
         type_sale,
         rank() over ( partition by user_id order by sale_date asc ) as rank
    from {{ ref('stg_mongo_sale_consolidation') }}
-   where type_sale = 'shop'
+   where type_sale = 'Boutique'
    order by user_id asc , rank asc 
 )
 
