@@ -9,7 +9,7 @@ select
  distinct 
   link_kraken,
   user_status_ as user_status,
-  name,
+  case when email like '%@poiscaille%' then 'Service Client Poiscaille' else name end as name , 
   phone_mobil,  
   user_id,
   email, 
