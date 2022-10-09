@@ -37,6 +37,7 @@ select
   subscription_total_casiers,
   channel,
   offerings_value_channel,
+  offerings_value_count,
   CASE WHEN channel = 'shop' THEN 'Boutique'
       WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
       WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'

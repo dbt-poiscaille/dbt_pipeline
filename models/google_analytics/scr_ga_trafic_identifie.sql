@@ -9,7 +9,7 @@
 with ga_data as (
 
 select 
-    event_date,
+    PARSE_DATE('%Y%m%d',event_date) as event_date, 
     event_name,
     case when event_name in ('signUp', 'signIn','signInCheck') then 'connected' else 'not connected' end as identification_status,
     device.category as device_category,
@@ -40,3 +40,4 @@ select
     count( distinct ga_session_id ) - count(distinct case when identification_status = 'connected' then ga_session_id end ) as visits_notconnected
 from ga_data
 group by 1,2,3,4,5
+order by event_date desc 
