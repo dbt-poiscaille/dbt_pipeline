@@ -12,7 +12,7 @@ WITH stripe_charges_consolidation AS (
         CASE
             WHEN charge_type LIKE '%Abonnement%' THEN 'Abonnement'
             WHEN charge_type LIKE 'Shop' THEN 'Boutique'
-            WHEN charge_type LIKE 'PetitPlus' THEN 'PetitPlus'
+            WHEN charge_type LIKE 'PetitPlus' THEN 'Petit plus'
             ELSE charge_type
         END AS charge_type,
         pr_id,
@@ -54,28 +54,8 @@ stripe_total_coupon_used AS (
     GROUP BY customer
 ),
 
-mongodb_sale_consolidation_by_date AS (
-    SELECT
-        customerid as mongodb_customer_id,
-        email as email,
-        sale_date,
-        CASE
-            WHEN type_sale LIKE 'Boutique' THEN 'Boutique'
-            WHEN type_sale LIKE 'Abonnement' THEN 'Abonnement'
-            WHEN type_sale LIKE 'Petit plus' THEN 'PetitPlus'
-            ELSE type_sale
-        END AS type_sale,
-        place_id,
-        place_name,
-        place_city,
-        place_codepostal,
-        nom_region,
-        nom_departement,
-        SUM(price_details_ttc) as total_mongo_sale_by_date,
-        --AVG(place_coupon_amount) as coupon_amount_used_mongo_by_date
-    FROM
-        {{ ref('stg_mongo_sale_consolidation')}}
-    GROUP BY
+mongo_sale_data as (
+    select distinct
         customerid,
         email,
         sale_date,
@@ -85,7 +65,29 @@ mongodb_sale_consolidation_by_date AS (
         place_city,
         place_codepostal,
         nom_region,
-        nom_departement
+        nom_departement,
+        price_ttc
+    FROM {{ ref('stg_mongo_sale_consolidation')}}
+),
+
+mongodb_sale_consolidation_by_date AS (
+    SELECT distinct
+        customerid as mongodb_customer_id,
+        email as email,
+        sale_date,
+        type_sale,
+        place_id,
+        place_name,
+        place_city,
+        place_codepostal,
+        nom_region,
+        nom_departement,
+        SUM(price_ttc) as total_mongo_sale_by_date,
+        --AVG(place_coupon_amount) as coupon_amount_used_mongo_by_date
+    FROM
+        mongo_sale_data
+    GROUP BY
+        1,2,3,4,5,6,7,8,9,10
 ),
 
 mongodb_sale_consolidation AS (

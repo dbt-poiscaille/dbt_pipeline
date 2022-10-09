@@ -29,6 +29,7 @@ select
   customerid,
   subscriptionid, 
   subscription_rate,
+  subscription_status,
   case when subscription_rate = 'biweekly' then 'Livraison chaque quinzaine'
        when subscription_rate = 'weekly' then 'Livraison chaque semaine'
        when subscription_rate = 'fourweekly' then 'Livraison chaque mois'
@@ -89,7 +90,8 @@ SELECT
   nom_region,
   zone
 FROM  {{ ref('stg_mongo_place_consolidation') }})
-SELECT sale_data.*, 
+
+SELECT distinct  sale_data.*, 
   place_name,
   place_owner,
   place_phone,

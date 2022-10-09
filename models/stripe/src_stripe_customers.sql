@@ -23,5 +23,14 @@ SELECT
   balance,
   next_invoice_sequence,
   default_source,
-  ---sources
+  discount.coupon.created as discount_coupon_created,
+  discount.coupon.id as discount_coupon_id,
+  discount.coupon.name as discount_coupon_name,
+  discount.coupon.percent_off as discount_coupon_percentoff,
+  discount.coupon.valid as discount_coupon_valid,
+  discount.coupon.livemode as discount_coupon_livemode,
+  discount.coupon.currency as discount_coupon_currency,
+  discount.coupon.amount_off as discount_coupon_amountoff,
+  discount.customer  as discount_customer
   from {{ source('stripe', 'customers') }}
+  

@@ -8,7 +8,9 @@
 select  
        PARSE_DATE('%Y%m%d',event_date) as Date, 
        device_category, 
-       concat (PARSE_DATE('%Y%m%d',event_date),'_', device_category) as subscriptions_ligne_id, 
+       traffic_name, 
+       traffic_source, 
+       traffic_medium,        
        --checkout_category, 
        count(distinct case when event_label='step1' then user_pseudo_id end ) as subscriptionFunnel_step1,
        count(distinct case when event_label='step2' then user_pseudo_id end ) as subscriptionFunnel_step2,
@@ -22,5 +24,5 @@ select
 
 from {{ ref('stg_ga_tunnel_conversion') }}
 where checkout_category = 'subscriptionFunnel'
-group by 1,2,3
+group by 1,2,3,4,5
 order by date desc 

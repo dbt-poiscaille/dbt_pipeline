@@ -3,7 +3,7 @@
 {{
   config(
     materialized = 'table',
-    labels = {'type': 'stripe', 'contains_pie': 'yes', 'category':'production'}  
+    labels = {'type': 'mongodb', 'contains_pie': 'yes', 'category':'production'}  
    )
 }}
 

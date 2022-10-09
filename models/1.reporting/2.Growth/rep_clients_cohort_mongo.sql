@@ -1,19 +1,24 @@
-
-
+{{
+  config(
+    materialized = 'table',
+    labels = {'type': 'mongodb', 'contains_pie': 'yes', 'category':'production'}  
+   )
+}}
+-- Analyse de cohort que sur les abonnements , début de données 072022
 
 WITH t_first_purchase AS (
   SELECT 
-  charge_date,
-  DATE_DIFF(charge_date, first_purchase_date, MONTH) AS month_order,
+  sale_date,
+  DATE_DIFF(sale_date, first_purchase_date, MONTH) AS month_order,
   FORMAT_DATETIME('%Y%m', first_purchase_date) AS first_purchase,
-  stripe_customer_id
+  user_id
   FROM (
     SELECT 
-     charge_date,
-     stripe_customer_id,
-    FIRST_VALUE(DATE(TIMESTAMP(charge_date))) OVER (PARTITION BY stripe_customer_id ORDER BY DATE(TIMESTAMP(charge_date))) AS first_purchase_date
-     from {{ ref('stg_charges_consolidation') }}
-
+     sale_date,
+     user_id,
+    FIRST_VALUE(DATE(TIMESTAMP(sale_date))) OVER (PARTITION BY user_id ORDER BY DATE(TIMESTAMP(sale_date))) AS first_purchase_date
+     from {{ ref('stg_mongo_sale_consolidation') }}
+      where type_sale != 'Boutique'  
     )
   ),
 
@@ -22,7 +27,7 @@ t_agg AS (
   SELECT 
   first_purchase,
   month_order,
-  COUNT(DISTINCT stripe_customer_id) AS Customers
+  COUNT(DISTINCT user_id) AS Customers
   FROM 
   t_first_purchase
   GROUP BY first_purchase, month_order
