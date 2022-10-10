@@ -9,7 +9,7 @@ select
  distinct 
   link_kraken,
   user_status_ as user_status,
-  case when email like '%@poiscaille%' then 'Service Client Poiscaille' else name end as name , 
+  case when email like '%@poiscaille%' then name_zendesk else name end as name , 
   phone_mobil,  
   user_id,
   email, 
@@ -46,7 +46,7 @@ select
   user_id_subscription,
   customer_id_stripe,
 from {{ ref('rep_clients_kpi_mongo') }} 
---where user_status != 'lead'
+--where user_status != 'lead' 
 order by user_id asc 
 
 

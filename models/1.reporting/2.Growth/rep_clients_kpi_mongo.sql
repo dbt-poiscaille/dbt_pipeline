@@ -11,9 +11,11 @@ WITH user_data AS (
 select 
 _id as user_id,
 concat ( 'https://poiscaille.fr/kraken/client/', _id) as link_kraken,
-(concat(INITCAP(firstname),' ',INITCAP(lastname))) as name,
+concat(INITCAP(firstname),' ',INITCAP(lastname)) as name,
 INITCAP(firstname) as firstname,
 INITCAP(lastname) as lastname,
+SUBSTR(INITCAP(lastname),0,1) as firstname_zendesk , 
+concat(INITCAP(firstname),' ',SUBSTR(INITCAP(lastname),0,1)) as name_zendesk ,
 role,
   'Utilisateur B2C' as contact_type,
   phone_fixe_f as phone_fixe, 
@@ -30,7 +32,7 @@ role,
   max(formula) as formula
 from
     {{ ref('src_mongodb_users') }}
- group by 1,2,3,4,5,6,7,8,9,10
+ group by 1,2,3,4,5,6,7,8,9,10,11,12
 ),
 
 
