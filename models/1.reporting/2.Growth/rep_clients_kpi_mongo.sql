@@ -7,6 +7,7 @@
    )
 }}
 
+-- Récupération et consolidation des données utilisateurs 
 WITH user_data AS (
 select 
 _id as user_id,
@@ -35,7 +36,7 @@ from
  group by 1,2,3,4,5,6,7,8,9,10,11,12
 ),
 
-
+-- Récupération des abonnements 
 subscription AS (
 SELECT 
   user_id as user_id_subscription,
@@ -64,6 +65,7 @@ SELECT * FROM subscription
 WHERE rn =1
 ), 
 
+-- Récupération et consolidation des coupons
 users_coupons as ( 
   select 
       customer, 
@@ -72,6 +74,7 @@ users_coupons as (
       last_coupon
      from  {{ ref('stg_coupons_users_consolidation') }}
 ),
+
 -- Récupération de tous les clients ayant un discount (50% sur tous les casiers)
 users_discount as (
 SELECT
@@ -88,8 +91,19 @@ WHERE
 order by id asc 
 ), 
 
-stripe_ca_refund as (
+-- Récupération de la première date de souscription
+users_first_subscriptions as (
+select
+  user_id as users_first_id,
+  min(cast(subscribed as date)) as min_subscribed
+from 
+  {{ ref('stg_subscription_consolidation') }}
+  where user_id is not null 
+  group by 1 
+), 
 
+-- Récupération des données CA et Remboursements Stripe
+stripe_ca_refund as (
   SELECT
   stripe_customer_id,
   receipt_email,
@@ -101,7 +115,7 @@ from
 group by 1,2
 ), 
 
-
+-- Consolidation des données transactionnelles  
 sale_data AS (
      SELECT 
         user_id as user_id_sale_data, 
@@ -148,6 +162,7 @@ user_type as (
 result as (
   SELECT *,
     'France' as country, 
+
     /*case 
     when total_subscriptions is null and total_shop is null then 'lead'
     when total_subscriptions is not null then 'subscriber'
@@ -161,6 +176,7 @@ result as (
         when place_openings_day ='Samedi' then 'Vendredi'
         end as place_openings_day_preparation, 
         */
+
     case 
         when total_transactions = 1 and (nb_casiers = 0 or (nb_casiers = 1 and user_id_subscription is not null)) and recence < 90 then 'Premiere transaction'
         when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or user_type.user_status_ = 'ancien client') and recence < 90 then 'Client Boutique'
@@ -186,7 +202,7 @@ result as (
         when localisation = 'Ile-de-France' and place_openings_day = 'Vendredi' then 'Vendredi'    
         when localisation = 'Ile-de-France' and place_openings_day = 'Mardi' then 'Mardi'    
         when localisation = 'Ile-de-France' and place_openings_day = 'Mercredi' then 'Mercredi'    
-        when localisation = 'Ile-de-France' and place_openings_day = 'Samedi' then 'Samedi' 
+        --when localisation = 'Ile-de-France' and place_openings_day = 'Samedi' then 'Samedi' 
         when localisation = 'Hors IdF' and place_openings_day = 'Jeudi' then 'Mercredi' 
         when localisation = 'Hors IdF' and place_openings_day = 'Vendredi' then 'Jeudi' 
         when localisation = 'Hors IdF' and place_openings_day = 'Mardi' then 'Lundi' 
@@ -201,6 +217,7 @@ result as (
   left join user_type on user_data.user_id = user_type.user_type_user_id
   left join stripe_ca_refund on user_data.customer_id_stripe = stripe_ca_refund.stripe_customer_id
   left join users_discount on user_data.customer_id_stripe = users_discount.discount_user_id 
+  left join users_first_subscriptions on user_data.user_id = users_first_subscriptions.users_first_id
   ORDER BY user_id asc 
 )
 
