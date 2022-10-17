@@ -54,7 +54,8 @@ select
   --offerings_value_items_value_product_type,
   invoiceitemid,
   chargeid,
-  status
+  status, 
+  1*offerings_value_count as sales_count, 
   FROM  {{ ref('src_mongodb_sale') }} 
   order by subscription_total_casiers asc 
 ),
@@ -65,7 +66,7 @@ sale_data_ttc_bonus as (
   case
     when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as int64)/100,2)
     when type_sale = 'Abonnement' then round(cast(subscription_price as int64)*offerings_value_count/100,2) 
-    when type_sale = 'Petit plus' then round(cast(price_ttc_raw - subscription_price as int64)*/100,2)  
+    when type_sale = 'Petit plus' then round(cast(price_ttc_raw as int64)  - cast(subscription_price as int64)*offerings_value_count /100,2)  
   end as price_ttc
   from sale_data
 ),
