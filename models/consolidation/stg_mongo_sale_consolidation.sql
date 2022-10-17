@@ -64,8 +64,8 @@ sale_data_ttc_bonus as (
     *,
   case
     when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as int64)/100,2)
-    when type_sale = 'Abonnement' then round(cast(subscription_price as int64)/100,2) 
-    when type_sale = 'Petit plus' then round(cast(price_ttc_raw - subscription_price as int64)/100,2)  
+    when type_sale = 'Abonnement' then round(cast(subscription_price as int64)*offerings_value_count/100,2) 
+    when type_sale = 'Petit plus' then round(cast(price_ttc_raw - subscription_price as int64)*/100,2)  
   end as price_ttc
   from sale_data
 ),
@@ -252,7 +252,3 @@ select * from result
 -- where user_id = '626984054b3baa57bb9f6744'
 -- where user_transaction_phase = 'Méga-Abonné'
 -- where customerid = 'cus_Fe5owEuY5Vh7Ko'
-
-
-
-
