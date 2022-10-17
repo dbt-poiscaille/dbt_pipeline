@@ -8,24 +8,73 @@
 with place_consolidation as (
 select
 place_id, 
-COUNT (DISTINCT(case when type_sale = 'abonnement' then user_id end)) AS nb_subscribers,
-round(sum(case when type_sale = 'abonnement' then price_details_ttc end )/100,2) as total_ca_subscriptions,
-round(sum(case when type_sale = 'shop' then price_details_ttc  end )/100,2) as total_ca_shop,
-round(sum(case when type_sale = 'Petit plus' then price_details_ttc end )/100,2) as total_ca_petitplus,
+COUNT (DISTINCT(case when type_sale = 'Abonnement' then user_id end)) AS nb_subscribers,
+round(sum(case when type_sale = 'Abonnement' then price_details_ttc end ),2) as total_ca_subscriptions,
+round(sum(case when type_sale = 'Boutique' then price_details_ttc  end ),2) as total_ca_shop,
+round(sum(case when type_sale = 'Petit plus' then price_details_ttc end ),2) as total_ca_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' then sale_id end)) AS nb_vente_petitplus,
-COUNT (DISTINCT(case when type_sale = 'Petit plus' or type_sale = 'shop'  then sale_id end)) AS nb_vente_hors_abo,
-round(SUM(price_details_ttc)/100,2) AS total_ca , 
-round((SUM(price_details_ttc)/count(distinct sale_id))/100,2) as pan_moy  , 
-round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_details_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end))/100,2) as panier_moyen_hors_casier
+COUNT (DISTINCT(case when type_sale = 'Petit plus' or type_sale = 'Boutique'  then sale_id end)) AS nb_vente_hors_abo,
+round(SUM(price_details_ttc),2) AS total_ca , 
+round((SUM(price_details_ttc)/count(distinct sale_id)),2) as pan_moy  , 
+round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then price_details_ttc end )/count( distinct case when type_sale = 'Boutique' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier
 
--- montant des remboursements
--- Panier Moyen hors ca
-FROM {{ ref('stg_mongo_sale_consolidation') }} 
-WHERE place_id IS NOT NULL
-GROUP BY 1
+from {{ ref('stg_mongo_sale_consolidation') }} 
+where place_id IS NOT NULL
+group by 1
 ) ,  
-place_info as (
 
+ sale_data as  (
+     select 
+        user_id as user_id_sale_data, 
+        email as user_email,
+        max(place_name) as place_name, 
+        max(place_id) as place_id, 
+        FROM {{ ref('stg_mongo_sale_consolidation') }}
+        group by 1,2 ) ,
+
+
+users_discount as (
+SELECT
+  distinct 
+  id as discount_user_id,
+  email as discount_user_email ,
+  discount_coupon_id,
+  discount_coupon_name,
+  discount_coupon_percentoff,
+FROM
+  {{ ref('src_stripe_customers') }}
+WHERE
+  discount_coupon_id = 'uUm1gzIT'
+order by id asc ) , 
+
+
+discount_consolidation as (
+select 
+    user_id_sale_data, 
+    user_email,
+    place_name, 
+    place_id, 
+    users_discount.discount_coupon_id,
+    users_discount.discount_user_email,
+    users_discount.discount_coupon_name
+    from sale_data
+    left join users_discount
+    on sale_data.user_email = users_discount.discount_user_email
+    where discount_user_email is not null 
+    order by users_discount.discount_coupon_id desc
+
+) ,
+
+place_discount as (
+select 
+ place_id as discount_place_id,
+ place_name as discount_place_name, 
+ count(distinct discount_user_email) as nombre_50_per_cent
+ from discount_consolidation
+ group by 1,2
+), 
+
+place_info as (
 select 
 distinct 
   place_id,
@@ -70,6 +119,7 @@ distinct
 
 select 
    place_consolidation.*,
+  nombre_50_per_cent,
   place_name,
   place_owner,
   place_phone,
@@ -108,6 +158,8 @@ select
   from place_consolidation
   left join place_info
   on place_consolidation.place_id = place_info.place_id 
+  left join place_discount
+  on place_consolidation.place_id = place_discount.discount_place_id
   order by place_consolidation.place_id asc 
   
 
