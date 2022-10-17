@@ -219,7 +219,7 @@ result as (
     place_coupon,
     place_lng,
     place_lat,
-    place_geocode,
+    place_geocode,  
     place_createdat,
     shipping_pickup,
     shipping_delay,
