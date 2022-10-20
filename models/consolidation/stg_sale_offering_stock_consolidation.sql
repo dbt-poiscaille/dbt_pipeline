@@ -8,6 +8,8 @@
 with stock_data as (
     select
         _id as stock_id,
+        item.supplier.name as supplier_name,
+        item.supplier.boat.name as supplier_boat_name,
         -- buyer._id as buyer_id,
         -- buyer.email as buyer_email,
         -- cast(createdat as date) as stock_createdat,
@@ -34,8 +36,8 @@ with stock_data as (
         cast(item.allocation.available.from as date) as item_allocation_available_from, 
         cast(item.allocation.available.to as date) as item_allocation_available_to,
 
-    from {{ ref('src_mongodb_stock') }},
-    unnest(adjustments) as adjustments
+    from {{ ref('src_mongodb_stock') }}
+    -- unnest(adjustments) as adjustments
 ),
 
 sale_offering_data as (
@@ -50,6 +52,7 @@ sale_offering_data as (
         offerings_value_id, 
         offerings_value_name,
         sale_product_id,
+        sale_product_type,
         sale_product_name,
         offerings_value_count, 
         offerings_value_price_ttc,
@@ -60,14 +63,12 @@ sale_offering_data as (
         offering_price_ht,
 
         items_value_allocations_stock_id,
-        items_value_allocations_slicing_portion_quantity,
-        items_value_allocations_slicing_portion_unit,
+        offerings_value_items_value_portion_quantity,
+        offerings_value_items_value_portion_unit,
         items_value_product_name,
         item_value_product_id,
 
-        items_value_allocations_value_cost_ttc,
-        -- items_value_allocations_value_cost_currency,
-        items_value_allocations_value_cost_unit
+        offerings_value_items_value_cost_ttc,
 
 
     from {{ ref('stg_mongo_sale_offering_consolidation') }}

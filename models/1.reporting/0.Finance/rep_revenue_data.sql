@@ -30,7 +30,7 @@ select
   price_ttc, 
   price_ht, 
   offerings_value_count,
-  --offerings_value_name,
+  offerings_value_name,
   --offerings_value_items_value_portion_unit,
   --offerings_value_items_value_portion_quantity,
   --offerings_value_item_value_cost_ht,
@@ -66,20 +66,21 @@ select
          end as margin_final,    
      offerings_value_channel,     
      offerings_value_count,
+    offerings_value_name,
      round(sum(offerings_value_price_ttc)/100,2) as price_ttc, 
      round(sum(offerings_value_price_ht)/100,2) as price_ht,      
      sum(offerings_value_price_ttc/100) as offerings_value_price_ttc ,
+
      --sum(offerings_value_price_ht/100) as offerings_value_price_ht,     
      --sum(offerings_value_item_value_cost_ht/100) as offerings_value_item_value_cost_ht ,
      --sum(offerings_value_items_value_cost_ttc/100) as offerings_value_items_value_cost_ttc,     
      --offerings_value_price_tax,
-     --offerings_value_name,
      --offerings_value_items_value_portion_unit,
      --offerings_value_items_value_portion_quantity,
      --offerings_value_items_value_cost_unit,
      --offerings_value_items_value_product_name
  from data_locker
-   group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16
+   group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17
 ) ,
 
 consolidation as (
