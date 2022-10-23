@@ -125,6 +125,8 @@ sale_data AS (
         max(place_name) as place_name, 
         max(place_id) as place_id, 
         max(place_address) as place_address, 
+        max(nom_departement) as place_departement, 
+        max(nom_region) as place_region, 
         max(place_city)  as place_city, 
         max(place_codepostal) as place_codepostal, 
         max(place_openings_day) as place_openings_day,

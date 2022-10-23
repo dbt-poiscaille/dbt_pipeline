@@ -37,6 +37,8 @@ select
     traffic_medium, 
     count( distinct ga_session_id ) as sessions, 
     count(distinct case when identification_status = 'connected' then ga_session_id end ) as visits_connected,
+    count(distinct case when user_type = 'subscriber' then ga_session_id end ) as visits_abonne,
+    count(distinct case when user_type = 'lead' then ga_session_id end ) as visits_prospect,
     count( distinct ga_session_id ) - count(distinct case when identification_status = 'connected' then ga_session_id end ) as visits_notconnected
 from ga_data
 group by 1,2,3,4,5

@@ -11,16 +11,17 @@ select
     sale_price_ttc,
     type_sale,
     subscription_price,
+    subscription_type,
     offerings_value_id,
     offerings_value_name,
+    suppliername,
     items_value_product_type,
     items_value_product_name,
-    items_value_allocations_slicing_portion_unit,
-    items_value_allocations_value_cost_currency,
+    offerings_value_items_value_portion_unit,
 
-    sum(items_value_allocations_slicing_portion_quantity) as total_slicing_portion_quantity,
-    sum(items_value_allocations_value_cost_ttc) as total_items_value_allocations_value_cost_ttc
+    sum(offerings_value_items_value_portion_quantity) as total_slicing_portion_quantity,
+    sum(offerings_value_items_value_cost_ttc) as total_items_value_allocations_value_cost_ttc
 
 from {{ ref('stg_mongo_sale_offering_consolidation') }}
-group by 1,2,3,4,5,6,7,8,9,10,11
+group by 1,2,3,4,5,6,7,8,9,10,11,12
 order by sale_date desc, sale_id

@@ -49,14 +49,16 @@ select
   offerings_value_price_ht,
   subscription_price,
   offerings_value_count,
-  --offerings_value_name,
-  --offerings_value_items_value_product_name,
+  offerings_value_name,
+  -- offerings_value_items_value_product_name,
   --offerings_value_items_value_product_id,
   --offerings_value_items_value_product_type,
-  invoiceitemid,
-  chargeid,
+  --invoiceitemid,
+  --chargeid,
   status, 
   FROM  {{ ref('src_mongodb_sale') }} 
+  where status is null
+  -- or status = 'paid'
   order by subscription_total_casiers asc 
 ),
 
@@ -64,7 +66,7 @@ sale_data_ttc_bonus as (
   select
     *,
   case
-    when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as int64)/100,2)
+    when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
     when type_sale = 'Abonnement' then round(cast(subscription_price as float64)/100,2) 
     when type_sale = 'Petit plus' then round(cast(offerings_value_price_ttc as float64)*offerings_value_count /100,2)  
   end as price_ttc
@@ -249,7 +251,7 @@ result as (
 )
 
 select * from result
--- where sale_id = '62cc5b3a9a26adf00ba40d58'
+-- where sale_id = '632db1102fc2eea1097cbcae'
 -- where user_id = '626984054b3baa57bb9f6744'
 -- where user_transaction_phase = 'Méga-Abonné'
 -- where customerid = 'cus_Fe5owEuY5Vh7Ko'
