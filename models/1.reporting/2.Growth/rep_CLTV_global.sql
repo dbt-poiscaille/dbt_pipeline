@@ -11,10 +11,12 @@ with month_data as (
     charge_month,
     count(distinct customer) as total_customer_in_month,
     count(distinct case when months_from_prev_charge is null then customer end) as nb_new_customer,
-    count(distinct case when months_from_prev_charge = 0 then customer end) as nb_customer_retained_in_month,
-    round(count(distinct case when months_from_prev_charge = 0 then customer end)/count(distinct customer),2) as retention_rate,
+    count(distinct case when months_from_prev_charge <= 1 then customer end) as nb_customer_retained_in_month,
+    round(count(distinct case when months_from_prev_charge <= 1 then customer end)/count(distinct customer),2) as retention_rate,
     count(distinct charge_id) as total_nb_charge,
-    round(avg(charges_amount)/100,2) as avg_charge
+    round(count(distinct charge_id)/count(distinct customer),2) as avg_monthly_purchase_freq,
+    round(sum(charges_amount/100),2) as revenue_ttc, 
+    round(sum(charges_amount/100)/count(distinct customer),2) as avg_revenue_ttc_per_customer
 
   FROM {{ ref('rep_stripe_retention') }} 
   group by 1,2
@@ -29,7 +31,7 @@ month_retention_data as (
 result as (
   select
     *,
-    round(total_nb_charge*avg_charge*avg_customer_lifetime,2) as total_customer_lifetime_value
+    round(avg_monthly_purchase_freq*avg_revenue_ttc_per_customer*avg_customer_lifetime,2) as avg_customer_lifetime_value_ttc
     
   from month_retention_data
   order by charge_year desc, charge_month desc
