@@ -15,7 +15,6 @@ with charge_data as (
         prev_charge_date,
         months_from_prev_charge,
         days_from_prev_charge,
-        
         charges_amount,
         amount_refunded,
         receipt_email,

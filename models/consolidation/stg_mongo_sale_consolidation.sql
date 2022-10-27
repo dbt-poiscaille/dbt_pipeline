@@ -6,71 +6,9 @@
 }}
 
 
-WITH  sale_data AS (
-select  
- distinct 
-  shippingat,
-  cast(shippingat as date) as shipping_date,
-  DATE_ADD(cast(shippingat as date), INTERVAL 1 DAY) as sale_date,
-  DATE_TRUNC(cast(shippingat as date), WEEK(MONDAY)) as first_day_week,
-  LAST_DAY(cast(shippingat as date), WEEK(MONDAY)) as last_day_week,        
-  sale_id,
-  place_id, 
-  company, 
-  firstname,
-  lastname,
-  phone,
-  user_id,
-  email,
-  createdat,
-  subscription_id,
-  price_ttc as price_ttc_raw,
-  --round(cast(price_ttc as int64)/100,2) as price_ttc,
-  -- round(cast(offerings_value_price_ttc as int64)/100,2) as price_ttc,  
-  refundedprice /100 as amount_refund,
-  customerid,
-  subscriptionid, 
-  subscription_rate,
-  subscription_status,
-  case when subscription_rate = 'biweekly' then 'Livraison chaque quinzaine'
-       when subscription_rate = 'weekly' then 'Livraison chaque semaine'
-       when subscription_rate = 'fourweekly' then 'Livraison chaque mois'
-       end as subscription_type,   
-  subscription_total_casiers,
-  channel,
-  offerings_value_channel,
-  CASE WHEN channel = 'shop' THEN 'Boutique'
-      WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-      WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-  END AS type_sale,  
-  round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
-  offerings_value_price_ttc,
-  offerings_value_price_tax,
-  offerings_value_price_ht,
-  subscription_price,
-  offerings_value_count,
-  offerings_value_name,
-  -- offerings_value_items_value_product_name,
-  --offerings_value_items_value_product_id,
-  --offerings_value_items_value_product_type,
-  --invoiceitemid,
-  --chargeid,
-  status, 
-  FROM  {{ ref('src_mongodb_sale') }} 
-  where status is null
-  -- or status = 'paid'
-  order by subscription_total_casiers asc 
-),
-
-sale_data_ttc_bonus as (
-  select
-    *,
-  case
-    when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
-    when type_sale = 'Abonnement' then round(cast(subscription_price as float64)/100,2) 
-    when type_sale = 'Petit plus' then round(cast(offerings_value_price_ttc as float64)*offerings_value_count /100,2)  
-  end as price_ttc
-  from sale_data
+WITH  sale_data_ttc_bonus as (
+  select *
+  from {{ ref('stg_mongo_sale_cleanup') }}
 ),
 
 sale_data_w_prev_transaction as (
@@ -80,10 +18,10 @@ sale_data_w_prev_transaction as (
   (select max(sale_date) from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date < s0.sale_date and s1.type_sale = 'Abonnement') as prev_subscription_sale_date,
   (select max(sale_date) from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date < s0.sale_date and s1.type_sale = 'Boutique') as prev_shop_sale_date,
 
-  (select sum(price_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Abonnement')) as curr_total_subscription_revenue,
-  (select sum(price_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Boutique')) as curr_total_shop_revenue,
-  (select sum(price_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_total_revenue,
-  (select round(sum(price_ttc)/count(distinct sale_id),2) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_avg_renevue,
+  (select sum(sale_locker_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Abonnement')) as curr_total_subscription_revenue,
+  (select sum(sale_boutique_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Boutique')) as curr_total_shop_revenue,
+  (select (sum(sale_locker_ttc) + sum(sale_boutique_ttc) + sum(sale_bonus_ttc)) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_total_revenue,
+  (select round((sum(sale_locker_ttc) + sum(sale_boutique_ttc) + sum(sale_bonus_ttc))/count(distinct sale_id),2) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_avg_renevue,
 
   (select count(distinct sale_id) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_nb_transaction,
   (select count(distinct sale_id) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Abonnement')) as curr_nb_transaction_locker,
@@ -210,6 +148,14 @@ SELECT
   zone
 FROM  {{ ref('stg_mongo_place_consolidation') }}),
 
+subscription_data as (
+  select distinct
+    user_type_user_id,
+    startingat,
+    user_status_
+    from {{ ref('stg_users_subscription_type') }}
+),
+
 result as (
   SELECT sale_data_final.*, 
     place_name,
@@ -243,9 +189,11 @@ result as (
     place_openings_depositschedule,
     nom_departement,
     nom_region,
-    zone
+    zone,
+    user_status_
   FROM sale_data_final 
     LEFT JOIN place_data ON sale_data_final.place_id = place_data.place_id
+    LEFT JOIN subscription_data ON sale_data_final.user_id = subscription_data.user_type_user_id
   order by sale_date desc ,  sale_id asc 
 
 )

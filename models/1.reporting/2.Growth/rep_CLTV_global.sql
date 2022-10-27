@@ -24,14 +24,14 @@ with month_data as (
 month_retention_data as (
   select
     *,
-    round(1/(1-nb_customer_retained_in_month/total_customer_in_month),2) as avg_customer_lifetime
+    round(safe_divide(1,(1-nb_customer_retained_in_month/total_customer_in_month)),2) as avg_customer_lifetime
   from month_data
 ),
 
 result as (
   select
     *,
-    round(avg_monthly_purchase_freq*avg_revenue_ttc_per_customer*avg_customer_lifetime,2) as avg_customer_lifetime_value_ttc
+    round(avg_revenue_ttc_per_customer*avg_customer_lifetime,2) as avg_customer_lifetime_value_ttc
     
   from month_retention_data
   order by charge_year desc, charge_month desc
