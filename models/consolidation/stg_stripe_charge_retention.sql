@@ -52,7 +52,7 @@ final_charges AS (
         cast(created as date) as charge_date,
         extract(year from created) as charge_year,
         extract(month from created) as charge_month,
-        cast(LAG(created) OVER (PARTITION BY customer ORDER BY created ASC) as date) as prev_charge_date,
+        cast(LAG(created) OVER (PARTITION BY customer ORDER BY created DESC) as date) as prev_charge_date,
         charges_amount,
         amount_refunded,
         charges.charge_id, 

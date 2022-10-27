@@ -46,20 +46,39 @@ select
 select 
       distinct 
      *,
+     --Old tel format
+      -- case 
+      --   when phone_fixe is null or phone_fixe like '' then null
+      --   when phone_fixe like '+%'  then cast(phone_fixe as string)
+      --   --some customers provide more than 1 tel number, they used '/' to separate them. We only take the 1st one 
+      --   when phone_fixe like '%/%' then TRIM(concat('+33',substr(cast(phone_fixe as string),2,10)),'/')
+      --   else concat('+33',substr(cast(phone_fixe as string),2,10))
+      -- end as phone_fixe_f,
+      -- case 
+      --   when phone_mobile is null or phone_mobile like '' then null
+      --   when phone_mobile like '+%' then cast(phone_mobile as string)
+      --   --some customers provide more than 1 tel number, they used '/' to separate them. We only take the 1st one 
+      --   when phone_mobile like '%/%' then TRIM(concat('+33',substr(cast(phone_mobile as string),2,10)),'/')
+      --   else concat('+33',substr(cast(phone_mobile as string),2,10))
+      -- end as phone_mobile_f,
+
+      --Replace posible space errors in tel number
       case 
         when phone_fixe is null or phone_fixe like '' then null
-        when phone_fixe like '+%'  then cast(phone_fixe as string)
+        when phone_fixe like '+%'  then REPLACE(cast(phone_fixe as string),' ','')
         --some customers provide more than 1 tel number, they used '/' to separate them. We only take the 1st one 
-        when phone_fixe like '%/%' then TRIM(concat('+33',substr(cast(phone_fixe as string),2,10)),'/')
-        else concat('+33',substr(cast(phone_fixe as string),2,10))
+        when phone_fixe like '%/%' then TRIM(concat('+33',substr(REPLACE(cast(phone_fixe as string),' ',''),2,10)),'/')
+        else concat('+33',substr(REPLACE(cast(phone_fixe as string),' ',''),2,10))
       end as phone_fixe_f,
       case 
         when phone_mobile is null or phone_mobile like '' then null
-        when phone_mobile like '+%' then cast(phone_mobile as string)
+        when phone_mobile like '+%' then REPLACE(cast(phone_mobile as string),' ','')
         --some customers provide more than 1 tel number, they used '/' to separate them. We only take the 1st one 
-        when phone_mobile like '%/%' then TRIM(concat('+33',substr(cast(phone_mobile as string),2,10)),'/')
-        else concat('+33',substr(cast(phone_mobile as string),2,10))
+        when phone_mobile like '%/%' then TRIM(concat('+33',substr(REPLACE(cast(phone_mobile as string),' ',''),2,10)),'/')
+        else concat('+33',substr(REPLACE(cast(phone_mobile as string),' ',''),2,10))
       end as phone_mobile_f,
+
+      
     from user_data
     order by _id asc 
 

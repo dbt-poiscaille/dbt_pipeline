@@ -11,6 +11,7 @@ select
        Date_shop_funnel, 
        device_category, 
        shop_ligne_id, 
+       shopFunnel_step0,
        shopFunnel_step1,
        shopFunnel_step2,
        shopFunnel_step3,
@@ -25,6 +26,7 @@ subscription_funnel as (
 select 
        Date, 
        subscriptions_ligne_id, 
+       subscriptionFunnel_step0,
        subscriptionFunnel_step1,
        subscriptionFunnel_step2,
        subscriptionFunnel_step3,

@@ -9,14 +9,14 @@ with place_consolidation as (
 select
 place_id, 
 COUNT (DISTINCT(case when type_sale = 'Abonnement' then user_id end)) AS nb_subscribers,
-round(sum(case when type_sale = 'Abonnement' then price_details_ttc end ),2) as total_ca_subscriptions,
-round(sum(case when type_sale = 'Boutique' then price_details_ttc  end ),2) as total_ca_shop,
-round(sum(case when type_sale = 'Petit plus' then price_details_ttc end ),2) as total_ca_petitplus,
+round(sum(case when type_sale = 'Abonnement' then sale_locker_ttc end ),2) as total_ca_subscriptions,
+round(sum(case when type_sale = 'Boutique' then sale_boutique_ttc  end ),2) as total_ca_shop,
+round(sum(case when type_sale = 'Petit plus' then sale_bonus_ttc end ),2) as total_ca_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' then sale_id end)) AS nb_vente_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' or type_sale = 'Boutique'  then sale_id end)) AS nb_vente_hors_abo,
-round(SUM(price_details_ttc),2) AS total_ca , 
-round((SUM(price_details_ttc)/count(distinct sale_id)),2) as pan_moy  , 
-round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then price_details_ttc end )/count( distinct case when type_sale = 'Boutique' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier
+round(SUM(sale_locker_ttc + sale_boutique_ttc + sale_bonus_ttc),2) AS total_ca , 
+round((SUM(sale_locker_ttc + sale_boutique_ttc + sale_bonus_ttc)/count(distinct sale_id)),2) as pan_moy  , 
+round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then (sale_locker_ttc + sale_bonus_ttc) end )/count( distinct case when type_sale = 'Boutique' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier
 
 from {{ ref('stg_mongo_sale_consolidation') }} 
 where place_id IS NOT NULL
@@ -119,6 +119,7 @@ distinct
 
 select 
    place_consolidation.*,
+  'Utilisateur B2B' as contact_type,
   nombre_50_per_cent,
   place_name,
   place_owner,

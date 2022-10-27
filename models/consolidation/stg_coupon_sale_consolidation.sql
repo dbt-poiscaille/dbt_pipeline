@@ -28,7 +28,10 @@ SELECT
   customerid,
   email,
   type_sale,
-  price_details_ttc,
+  sale_boutique_ttc,
+  sale_locker_ttc,
+  sale_bonus_ttc
+  -- price_details_ttc,
   --offerings_value_items_value_product_type,
   --offerings_value_name
 FROM {{ ref('stg_mongo_sale_consolidation')}} 
