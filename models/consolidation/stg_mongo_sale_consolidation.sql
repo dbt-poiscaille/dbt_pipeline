@@ -22,7 +22,7 @@ sale_data_w_prev_transaction as (
   (select sum(sale_boutique_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, sale_boutique_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Boutique')) as curr_total_shop_revenue,
   (select sum(sale_bonus_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, sale_bonus_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Petit plus')) as curr_total_bonus_revenue,
   (select sum(sale_total_ttc) from (select distinct sale_id, sale_date, user_id, type_sale, sale_total_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_total_revenue,
-  (select round(sum(sale_total_ttc)/count(distinct sale_id),2) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_avg_renevue,
+  (select round(sum(sale_total_ttc)/count(distinct sale_id),2) from (select distinct sale_id, sale_date, user_id, type_sale, sale_total_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_avg_renevue,
 
   (select count(distinct sale_id) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date)) as curr_nb_transaction,
   (select count(distinct sale_id) from (select distinct sale_id, sale_date, user_id, type_sale, price_ttc from sale_data_ttc_bonus s1 where s1.user_id = s0.user_id and s1.sale_date <= s0.sale_date and s1.type_sale = 'Abonnement')) as curr_nb_transaction_locker,
