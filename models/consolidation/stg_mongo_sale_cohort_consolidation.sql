@@ -21,7 +21,7 @@ with sale_consolidation as (
         sale_boutique_ttc,
         sale_locker_ttc,
         sale_bonus_ttc,
-        sale_bonus_ttc+sale_boutique_ttc+sale_locker_ttc as sale_total_ttc,
+        sale_total_ttc,
 
         extract(year from sale_date) as sale_year,
         extract(month from sale_date) as sale_month,
@@ -40,6 +40,22 @@ with sale_consolidation as (
     from {{ ref('stg_mongo_sale_consolidation') }}
 ),
 
+t_first_purchase AS (
+  SELECT distinct
+  sale_date,
+  DATE_DIFF(sale_date, first_purchase_date, MONTH) AS month_order,
+  first_purchase_date AS first_purchase_date,
+  user_id
+  FROM (
+    SELECT 
+     sale_date,
+     user_id,
+    FIRST_VALUE(DATE(TIMESTAMP(sale_date))) OVER (PARTITION BY user_id ORDER BY DATE(TIMESTAMP(sale_date))) AS first_purchase_date
+     from sale_consolidation
+      where type_sale != 'Boutique'  
+    )
+  ),
+
 contact_cohort as (
     select distinct
         _id as user_id,
@@ -47,9 +63,17 @@ contact_cohort as (
     from {{ ref('src_mongodb_users') }}
 )
 
-select
+select distinct
     sale_consolidation.*,
-    contact_createdat
+    contact_createdat,
+    first_purchase_date,
+    extract(month from first_purchase_date) as first_purchase_month,
+    extract(year from first_purchase_date) as first_purchase_year,
+    date_diff(sale_consolidation.sale_date,first_purchase_date,month) as months_from_first_purchase,
+
+
 from sale_consolidation
 left join contact_cohort
 on sale_consolidation.user_id = contact_cohort.user_id
+left join t_first_purchase
+on sale_consolidation.user_id = t_first_purchase.user_id
