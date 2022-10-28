@@ -115,4 +115,7 @@ sale_data_ttc_bonus as (
   from sale_data
 )
 
-select * from sale_data_ttc_bonus
+select 
+  *,
+  IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc
+from sale_data_ttc_bonus
