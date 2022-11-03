@@ -14,9 +14,9 @@ round(sum(case when type_sale = 'Boutique' then sale_boutique_ttc  end ),2) as t
 round(sum(case when type_sale = 'Petit plus' then sale_bonus_ttc end ),2) as total_ca_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' then sale_id end)) AS nb_vente_petitplus,
 COUNT (DISTINCT(case when type_sale = 'Petit plus' or type_sale = 'Boutique'  then sale_id end)) AS nb_vente_hors_abo,
-round(SUM(sale_locker_ttc + sale_boutique_ttc + sale_bonus_ttc),2) AS total_ca , 
-round((SUM(sale_locker_ttc + sale_boutique_ttc + sale_bonus_ttc)/count(distinct sale_id)),2) as pan_moy  , 
-round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then (sale_locker_ttc + sale_bonus_ttc) end )/count( distinct case when type_sale = 'Boutique' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier
+round(SUM(sale_total_ttc),2) AS total_ca , 
+round((SUM(sale_total_ttc)/count(distinct sale_id)),2) as pan_moy  , 
+round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then (IFNULL(sale_locker_ttc,0) + IFNULL(sale_bonus_ttc,0)) end )/count( distinct case when type_sale = 'Boutique' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier
 
 from {{ ref('stg_mongo_sale_consolidation') }} 
 where place_id IS NOT NULL

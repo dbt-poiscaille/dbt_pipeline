@@ -191,7 +191,7 @@ result as (
     nom_departement,
     nom_region,
     zone,
-    user_status_
+    ifnull(user_status_, 'Sans Abonnement') as user_status_
   FROM sale_data_final 
     LEFT JOIN place_data ON sale_data_final.place_id = place_data.place_id
     LEFT JOIN subscription_data ON sale_data_final.user_id = subscription_data.user_type_user_id

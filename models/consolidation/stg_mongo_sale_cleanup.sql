@@ -58,7 +58,7 @@ select
   status, 
   FROM  {{ ref('src_mongodb_sale') }} 
   where status is null
-  -- or status = 'paid'
+  or status = 'paid'
   order by subscription_total_casiers asc 
 ),
 
@@ -93,7 +93,7 @@ sale_data_ttc_bonus as (
     type_sale,  
     subscription_price,
     --chargeid,
-    status, 
+    -- status, 
     
     case
       when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
