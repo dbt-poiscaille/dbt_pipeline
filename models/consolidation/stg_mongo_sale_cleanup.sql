@@ -24,6 +24,9 @@ select
   email,
   createdat,
   subscription_id,
+  shipping_addresse,
+  shipping_city,
+  shipping_codepostal,
   price_ttc as price_ttc_raw,
   --round(cast(price_ttc as int64)/100,2) as price_ttc,
   -- round(cast(offerings_value_price_ttc as int64)/100,2) as price_ttc,  
@@ -80,6 +83,9 @@ sale_data_ttc_bonus as (
     email,
     createdat,
     subscription_id,
+    shipping_addresse,
+    shipping_city,
+    shipping_codepostal,
     price_ttc_raw,
     amount_refund,
     customerid,
@@ -113,9 +119,41 @@ sale_data_ttc_bonus as (
     end as sale_bonus_ttc,
 
   from sale_data
-)
+),
+
+  data_cp as (
+    SELECT
+      in_date,
+      in_id,
+      in_invoice,
+      in_subscription_id,
+      round(in_amount/100,2) as coupon_value,
+      customer,
+      description,
+      SPLIT(description, ' ')[OFFSET(1)] as coupon_name
+    FROM
+      {{ ref('src_stripe_invoice_items') }}
+    WHERE
+      description LIKE 'Coupon%'
+  ),
+
+  data_cp_with_src as (
+    select
+      data_cp.*,
+      Type as coupon_source
+    from data_cp
+    left join {{ ref('src_external_coupon') }} src_cp
+    on data_cp.coupon_name = src_cp.coupon
+  )
 
 select 
-  *,
-  IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc
+  sale_data_ttc_bonus.*,
+  IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc,
+  coupon_value,
+  coupon_name,
+  coupon_source
 from sale_data_ttc_bonus
+left join data_cp_with_src
+on 
+  sale_data_ttc_bonus.sale_date = data_cp_with_src.in_date
+  AND sale_data_ttc_bonus.customerid = data_cp_with_src.customer

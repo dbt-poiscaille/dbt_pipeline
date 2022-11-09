@@ -49,19 +49,35 @@ SELECT
   createdat as subscription_createdat,
   subscription_date_mongo AS subscription_date,
   subscription_status,
+  formula as subscription_formula,
   rate,
+  cast(startingat as date) as subscription_startingat,
+  cast(lastingat as date) as subscription_lastingat,
   case when rate = 'biweekly' then 'Livraison chaque quinzaine'
        when rate = 'weekly' then 'Livraison chaque semaine'
        when rate = 'monthly' then 'Livraison chaque mois'
-       end as subscription_type,
-ROW_NUMBER() OVER (
-      PARTITION BY user_id
-      ORDER BY subscription_date_mongo DESC
-   ) rn
+  end as subscription_type,
+  unsubscribed_reason,
+  ROW_NUMBER() OVER (
+        PARTITION BY user_id
+        ORDER BY subscription_date_mongo DESC
+    ) rn
 FROM {{ ref('stg_subscription_consolidation') }}
 ),
+
 current_subscription AS (
-SELECT * FROM subscription 
+SELECT 
+  *,
+  case
+    when subscription_lastingat > current_date() then subscription_lastingat
+    when subscription_startingat is not null and subscription_formula = 'uniq' then subscription_startingat
+    when subscription_formula = 'subscription' and subscription_startingat >= current_date() then subscription_startingat
+    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'weekly' then date_add(subscription_startingat, INTERVAL 7*(DIV(date_diff(current_date(), subscription_startingat, DAY),7)+1) DAY)
+    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'biweekly' then date_add(subscription_startingat, INTERVAL 14*(DIV(date_diff(current_date(), subscription_startingat, DAY),14)+1) DAY)
+    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'monthly' then date_add(subscription_startingat, INTERVAL 28*(DIV(date_diff(current_date(), subscription_startingat, DAY),28)+1) DAY)
+    else null
+  end as next_locker_date
+FROM subscription 
 WHERE rn =1
 ), 
 
@@ -71,7 +87,8 @@ users_coupons as (
       customer, 
       nb_coupons,
       coupons_amount, 
-      last_coupon
+      last_coupon,
+      coupon_source
      from  {{ ref('stg_coupons_users_consolidation') }}
 ),
 
@@ -104,20 +121,20 @@ from
 
 -- Récupération des données CA et Remboursements Stripe
 stripe_ca_refund as (
-  SELECT
+  SELECT distinct
   stripe_customer_id,
-  receipt_email,
+  -- receipt_email,
   round(sum(charges_amount),2) as ca_global_stripe,
   round(sum(amount_refunded),2) as refund_global_stripe,  
   round(sum(charges_amount),2) - round(sum(amount_refunded),2) as final_ca_stripe
 from 
  {{ ref('stg_charges_consolidation') }}
-group by 1,2
+group by 1
 ), 
 
 -- Consolidation des données transactionnelles  
 sale_data AS (
-     SELECT 
+     SELECT distinct
         user_id as user_id_sale_data, 
         case when date_diff( current_date(), max(sale_date), day) > 90 then 'Churn' else 'Retain' end as customer_status,         
         date_diff(current_date(), max(sale_date) ,day) as recence, 
@@ -133,36 +150,51 @@ sale_data AS (
         max(place_openings_schedule) as place_openings_schedule,
         case when max(nom_region) = 'Île-de-France' then 'Ile-de-France' else 'Hors IdF' end as localisation, 
         max(zone) as zone_vacances_scolaire,
-        round(sum(price_ttc),2) as monetary,
+        -- round(sum(sale_total_ttc),2) as monetary,
         count(distinct sale_id) as total_transactions, 
         count(distinct subscriptionid) as subscriptions, 
         count(subscriptionid) as subscriptions_occurence, 
         min(sale_date) as first_payment , 
-        round(sum(price_ttc),2) as customer_revenue, 
+        round(sum(sale_total_ttc),2) as customer_revenue, 
         max(sale_date) as last_payment ,  
         max(case when type_sale = 'Abonnement' then sale_date end) as last_subscription_date,
         max(case when type_sale = 'Boutique' then sale_date end) as last_shop_date,
-        round(sum(case when type_sale = 'Abonnement' then price_ttc end ),2) as total_subscriptions,
-        round(sum(case when type_sale = 'Boutique' then price_ttc end ),2) as total_shop,
-        round(sum(case when type_sale = 'Petit plus' then price_ttc end),2) as total_petitplus,
-        round(sum(price_ttc),2) as total_ca_global,
-        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE)) then price_ttc end ),2) as total_year,
-        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE))-1 then price_ttc end ),2) as total_last_year,
+        round(sum(case when type_sale = 'Abonnement' then sale_locker_ttc end ),2) as total_subscriptions,
+        round(sum(case when type_sale = 'Boutique' then sale_boutique_ttc end ),2) as total_shop,
+        round(sum(case when type_sale = 'Petit plus' then sale_bonus_ttc end),2) as total_petitplus,
+        round(sum(sale_total_ttc),2) as total_ca_global,
+        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE)) then sale_total_ttc end ),2) as total_year,
+        round(sum(case when EXTRACT(YEAR FROM sale_date)  = EXTRACT(YEAR FROM CAST(CURRENT_DATE() AS DATE))-1 then sale_total_ttc end ),2) as total_last_year,
         round(sum(amount_refund),2) as amount_refunded,
-        round(sum(price_ttc),2) as ca_global,
+        round(sum(sale_total_ttc),2) as ca_global,
         max(subscription_total_casiers) as nb_casiers,
-        round(sum(price_ttc)/count(distinct sale_id),2) as pan_moy,
+        round(sum(sale_total_ttc)/count(distinct sale_id),2) as pan_moy,
         round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier_1,
-        round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct sale_id),2) as panier_moyen_hors_casier_2
+        round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct sale_id),2) as panier_moyen_hors_casier_2,
+        
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1),
+
+-- cp_source as (
+--   select distinct
+--     user_id as user_id_cp,
+--     first_value(coupon_source) over (partition by user_id order by count_cp_src desc) as coupon_source,
+--   from (
+--     select
+--       user_id,
+--       coupon_source,
+--       count(coupon_source) as count_cp_src
+--     from {{ ref('stg_mongo_sale_consolidation') }}
+--     group by 1,2
+--   )
+-- ),
 
 user_type as (
   select * from {{ ref('stg_users_subscription_type') }}
 ),
 
 result as (
-  SELECT *,
+  SELECT * except (user_status),
     'France' as country, 
 
     /*case 
@@ -181,12 +213,12 @@ result as (
 
     case 
         when total_transactions = 1 and (nb_casiers = 0 or (nb_casiers = 1 and user_id_subscription is not null)) and recence < 90 then 'Premiere transaction'
-        when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or user_type.user_status_ = 'ancien client') and recence < 90 then 'Client Boutique'
+        when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or user_type.user_status_ = 'Ancien Abonne') and recence < 90 then 'Client Boutique'
         when total_transactions > 1 and total_subscriptions > 0 and user_type.user_status = 'subscriber' then 'Abonné' 
         when total_transactions > 1 and total_ca_global > 2000 and user_type.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 or pan_moy > 100 then 'Client Promoteur'
         when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'Méga-Abonné'
         when (
-          user_type.user_status_ = 'ancien client' 
+          user_type.user_status_ = 'Ancien Abonne' 
           and (
             last_shop_date < last_subscription_date
             --& add: pas d'achat boutique après résilliation dans les 3 derniers mois
@@ -198,7 +230,16 @@ result as (
             and recence > 90
           ) 
           then 'Ancien client'
-        else 'Autres' end as user_phase_transaction,  
+        else 'Autres' end as user_phase_transaction,
+    
+    case
+      when user_type.user_status_ = 'Ancien Abonne' then 'subscriber'
+      when user_type.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer'
+      when (user_type.user_status_ = 'Ancien Abonne' or user_type.user_status_ = 'Sans Abonnement') and recence > 90 then '92366307'
+      when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'other' 
+      else 'lead'
+    end as user_status,
+    
     case 
         when localisation = 'Ile-de-France' and place_openings_day = 'Jeudi' then 'Jeudi'    
         when localisation = 'Ile-de-France' and place_openings_day = 'Vendredi' then 'Vendredi'    
@@ -213,13 +254,16 @@ result as (
         end as place_openings_day_preparation, 
         ca_global_stripe - refund_global_stripe as reel_ca_global_stripe,
     case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type
-      FROM user_data LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id_subscription
+  
+  FROM user_data 
+  LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id_subscription
   LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
   left join users_coupons on user_data.customer_id_stripe = users_coupons.customer
   left join user_type on user_data.user_id = user_type.user_type_user_id
   left join stripe_ca_refund on user_data.customer_id_stripe = stripe_ca_refund.stripe_customer_id
   left join users_discount on user_data.customer_id_stripe = users_discount.discount_user_id 
   left join users_first_subscriptions on user_data.user_id = users_first_subscriptions.users_first_id
+  -- left join cp_source on user_data.user_id = cp_source.user_id_cp
   ORDER BY user_id asc 
 )
 

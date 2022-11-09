@@ -48,10 +48,11 @@ data_communes as (
       distinct 
     nom_departement,
     nom_region,
-    code_commune,
-    nom_commune_postal,
+    -- code_commune,
+    -- nom_commune_postal,
     code_postal
-    from `poiscaille-358510.dbt_dev_pipeline.stg_data_communes`
+    from {{ ref('src_external_commune_departement') }}
+    -- from `poiscaille-358510.dbt_dev_pipeline.stg_data_communes`
 ), 
 
 final_table as (
