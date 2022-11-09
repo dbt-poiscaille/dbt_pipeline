@@ -233,11 +233,11 @@ result as (
         else 'Autres' end as user_phase_transaction,
     
     case
-      when user_type.user_status_ = 'Ancien Abonne' then 'subscriber'
+      when user_type.user_status_ = 'Abonne' then 'subscriber'
       when user_type.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer'
-      when (user_type.user_status_ = 'Ancien Abonne' or user_type.user_status_ = 'Sans Abonnement') and recence > 90 then '92366307'
+      when user_type.user_status_ = 'Ancien Abonne' and recence > 90 then '92366307'
       when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'other' 
-      else 'lead'
+      else user_status
     end as user_status,
     
     case 
