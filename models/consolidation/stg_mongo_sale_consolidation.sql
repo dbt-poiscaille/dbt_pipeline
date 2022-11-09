@@ -165,6 +165,18 @@ result as (
     place_city,
     place_address,
     place_codepostal,
+    -- case 
+    --   when place_name = 'Livraison à domicile' then shipping_city
+    --   else place_city
+    -- end as place_city,
+    -- case 
+    --   when place_name = 'Livraison à domicile' then shipping_addresse
+    --   else place_address
+    -- end as place_address,
+    -- case 
+    --   when place_name = 'Livraison à domicile' then shipping_codepostal
+    --   else place_codepostal
+    -- end as place_codepostal,
     place_email,
     place_coupon,
     place_lng,

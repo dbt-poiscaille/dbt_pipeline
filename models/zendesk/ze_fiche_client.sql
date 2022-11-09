@@ -45,6 +45,7 @@ select
   case when refund_global_stripe is null then 0 else refund_global_stripe end as refund_global_stripe,
   case when user_id_subscription is null then 'No Subscription' else user_id_subscription end as user_id_subscription,
   customer_id_stripe,
+  unsubscribed_reason
 from {{ ref('rep_clients_kpi_mongo') }} 
 --where user_status != 'lead' 
 order by user_id asc 

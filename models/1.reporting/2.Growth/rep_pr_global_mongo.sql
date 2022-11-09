@@ -20,6 +20,7 @@ round((sum(case when type_sale = 'Boutique' or type_sale = 'Petit plus' then (IF
 
 from {{ ref('stg_mongo_sale_consolidation') }} 
 where place_id IS NOT NULL
+and place_name <> 'Livraison à domicile'
 group by 1
 ) ,  
 

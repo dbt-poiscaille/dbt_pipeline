@@ -54,7 +54,7 @@ max_data as (
 
   select 
        user_data.user_id as user_type_user_id, 
-       startingat , 
+       startingat, 
        case when user_status is null then 'lead' else user_status end as user_status,
        case when user_status_ is null then 'Sans Abonnement' else user_status_ end as user_status_
        

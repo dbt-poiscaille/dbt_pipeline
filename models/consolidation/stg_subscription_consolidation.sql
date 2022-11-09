@@ -19,7 +19,8 @@ SELECT
   date_diff(current_date(), cast(subscribed as date), year) as subscription_year,
   formula,
   price,
-  --startingat,
+  startingat,
+  lastingat,
   case when startingat is null then 'Cancelled' else 'Active' end as subscription_status,
   place_id ,
   place_name,
@@ -30,7 +31,8 @@ SELECT
   allergies_shells ,
   allergies_fishes  ,
   allergies_others ,
-  allergies_invalid, 
+  allergies_invalid,
+  unsubscribed_reason
 from
    {{ ref('src_mongodb_subscriptions')}}  
 
