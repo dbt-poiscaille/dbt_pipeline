@@ -66,12 +66,20 @@ order by name asc
 
 select 
      *,
-      case 
-        when openings_day = 'Thursday' then 'Jeudi' 
-        when openings_day = 'Friday' then 'Vendredi' 
-        when openings_day = 'Tuesday' then 'Mardi' 
-        when openings_day = 'Wednesday' then 'Mercredi' 
-        when openings_day = 'Saturday' then 'Samedi' 
+      case
+        when delay = 1 and openings_day = 'Monday' then 'Mardi'
+        when delay = 1 and openings_day = 'Tuesday' then 'Mercredi' 
+        when delay = 1 and openings_day = 'Wednesday' then 'Jeudi' 
+        when delay = 1 and openings_day = 'Thursday' then 'Vendredi'
+        when delay = 1 and openings_day = 'Friday' then 'Lundi' 
+        when delay = 1 and openings_day = 'Saturday' then 'Lundi' 
+
+        when delay = 0 and openings_day = 'Monday' then 'Lundi'
+        when delay = 0 and openings_day = 'Tuesday' then 'Mardi' 
+        when delay = 0 and openings_day = 'Wednesday' then 'Mercredi' 
+        when delay = 0 and openings_day = 'Thursday' then 'Jeudi' 
+        when delay = 0 and openings_day = 'Friday' then 'Vendredi' 
+        when delay = 0 and openings_day = 'Saturday' then 'Samedi' 
         end as openings_day_fr
     from data_user_mongo      
 

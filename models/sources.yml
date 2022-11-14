@@ -124,6 +124,14 @@ sources:
         tags: ['MongoDb']
         meta:
           contains_pii: true
-          owner : "Sales & SAV"           
+          owner : "Sales & SAV"
+
+  - name: hubspot
+    loader: BigQuery
+    schema: poiscaille_hubspot
+    database: poiscaille-358510
+    tables:
+      - name: companies
+        tags: ['Hubspot']
   
   
