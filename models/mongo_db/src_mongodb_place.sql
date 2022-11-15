@@ -71,10 +71,10 @@ select
         when delay = 1 and openings_day = 'Tuesday' then 'Mercredi' 
         when delay = 1 and openings_day = 'Wednesday' then 'Jeudi' 
         when delay = 1 and openings_day = 'Thursday' then 'Vendredi'
-        when delay = 1 and openings_day = 'Friday' then 'Lundi' 
-        when delay = 1 and openings_day = 'Saturday' then 'Lundi' 
+        when delay = 1 and openings_day = 'Friday' then 'Mardi' 
+        when delay = 1 and openings_day = 'Saturday' then 'Mardi' 
 
-        when delay = 0 and openings_day = 'Monday' then 'Lundi'
+        when delay = 0 and openings_day = 'Monday' then 'Mardi'
         when delay = 0 and openings_day = 'Tuesday' then 'Mardi' 
         when delay = 0 and openings_day = 'Wednesday' then 'Mercredi' 
         when delay = 0 and openings_day = 'Thursday' then 'Jeudi' 
