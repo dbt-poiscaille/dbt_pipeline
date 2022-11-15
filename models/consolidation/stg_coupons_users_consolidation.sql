@@ -55,6 +55,7 @@ select
   data_cp.customer,
   case
     when coupon_source = 'Remises Stripe' then 'Stripe'
+    when coupon_source = 'Influenceurs & partenaires' then 'Influenceurs'
     else coupon_source
   end as coupon_source,
   count(distinct description) as nb_coupons,
