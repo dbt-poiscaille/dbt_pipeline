@@ -30,7 +30,7 @@ with
       data_cp.*,
       case
         when Type is not null then Type
-        when Type is null and coupon_name like '%@%' then coupon_name
+        when Type is null and coupon_name like '%@%' then 'Parrainage'
       end as coupon_source
     from data_cp
     left join {{ ref('src_external_coupon') }} src_cp
