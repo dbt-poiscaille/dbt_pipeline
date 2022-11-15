@@ -28,7 +28,10 @@ with
   data_cp_with_src as (
     select
       data_cp.*,
-      Type as coupon_source
+      case
+        when Type is not null then Type
+        when Type is null and coupon_name like '%@%' then coupon_name
+      end as coupon_source
     from data_cp
     left join {{ ref('src_external_coupon') }} src_cp
     on data_cp.coupon_name = src_cp.coupon

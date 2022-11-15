@@ -40,6 +40,7 @@ from
 subscription AS (
 SELECT 
   user_id as user_id_subscription,
+  id as subscription_id,
   allergies_oysters,
   allergies_crustaceans  ,
   allergies_shells ,
@@ -53,6 +54,17 @@ SELECT
   rate,
   cast(startingat as date) as subscription_startingat,
   cast(lastingat as date) as subscription_lastingat,
+
+  case
+    when subscription_status = 'Active' then 'Abonne'
+    when subscription_status = 'Cancelled' then 'Ancien Abonne'
+  end as user_status_,
+  
+  case
+    when subscription_status = 'Active' then 'subscriber'
+    when subscription_status = 'Cancelled' then '92366307'
+  end as user_status,
+
   case when rate = 'biweekly' then 'Livraison chaque quinzaine'
        when rate = 'weekly' then 'Livraison chaque semaine'
        when rate = 'monthly' then 'Livraison chaque mois'
@@ -65,7 +77,7 @@ SELECT
 FROM {{ ref('stg_subscription_consolidation') }}
 ),
 
-current_subscription AS (
+subscription_w_next_date_data AS (
 SELECT 
   *,
   case
@@ -76,10 +88,62 @@ SELECT
     when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'biweekly' then date_add(subscription_startingat, INTERVAL 14*(DIV(date_diff(current_date(), subscription_startingat, DAY),14)+1) DAY)
     when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'monthly' then date_add(subscription_startingat, INTERVAL 28*(DIV(date_diff(current_date(), subscription_startingat, DAY),28)+1) DAY)
     else null
-  end as next_locker_date
+  end as next_locker_date_temp
 FROM subscription 
-WHERE rn =1
-), 
+),
+
+-- Case when 1 user have many abo, the next locker date is the nearest one among the subscriptions
+next_locker_date_final as (
+  select 
+    user_id_subscription,
+    min(case when next_locker_date_temp > current_date() then next_locker_date_temp end) as next_locker_date
+  from subscription_w_next_date_data
+  group by 1
+),
+
+count_active_subscription as (
+  select
+    user_id_subscription,
+    count(distinct subscription_id) as current_active_subscriptions
+  from subscription
+  where subscription_status = 'Active'
+  and subscription_formula = 'subscription'
+  group by 1
+),
+
+current_subscription as (
+  select distinct
+    *
+  from subscription_w_next_date_data
+  where 
+    subscription_formula = 'subscription'
+    and subscription_status = 'Active'
+    and rn = 1
+),
+
+-- Récupération de la première date de souscription
+users_first_subscriptions as (
+select
+  user_id as users_first_id,
+  min(cast(subscribed as date)) as min_subscribed
+from 
+  {{ ref('stg_subscription_consolidation') }}
+  where user_id is not null 
+  group by 1 
+),
+
+-- Final model subscription to join with user data
+subscription_final_data as (
+  select
+    current_subscription.*,
+    next_locker_date,
+    current_active_subscriptions,
+    min_subscribed
+  from current_subscription
+  left join count_active_subscription on current_subscription.user_id_subscription = count_active_subscription.user_id_subscription
+  left join next_locker_date_final on current_subscription.user_id_subscription = next_locker_date_final.user_id_subscription
+  left join users_first_subscriptions on current_subscription.user_id_subscription = users_first_subscriptions.users_first_id
+),
 
 -- Récupération et consolidation des coupons
 users_coupons as ( 
@@ -108,16 +172,6 @@ WHERE
 order by id asc 
 ), 
 
--- Récupération de la première date de souscription
-users_first_subscriptions as (
-select
-  user_id as users_first_id,
-  min(cast(subscribed as date)) as min_subscribed
-from 
-  {{ ref('stg_subscription_consolidation') }}
-  where user_id is not null 
-  group by 1 
-), 
 
 -- Récupération des données CA et Remboursements Stripe
 stripe_ca_refund as (
@@ -189,36 +243,18 @@ sale_data AS (
 --   )
 -- ),
 
-user_type as (
-  select * from {{ ref('stg_users_subscription_type') }}
-),
-
 result as (
-  SELECT * except (user_status),
+  SELECT * except (user_status,user_status_,next_locker_date_temp,rn),
     'France' as country, 
-
-    /*case 
-    when total_subscriptions is null and total_shop is null then 'lead'
-    when total_subscriptions is not null then 'subscriber'
-    when total_subscriptions is null and total_shop >0 then 'customer'
-    end as client_lifecycle, 
-    case 
-        when place_openings_day ='Jeudi' then 'Mercredi'
-        when place_openings_day ='Vendredi' then 'Jeudi'
-        when place_openings_day ='Mardi' then 'Lundi'
-        when place_openings_day ='Mercredi' then 'Mardi'
-        when place_openings_day ='Samedi' then 'Vendredi'
-        end as place_openings_day_preparation, 
-        */
 
     case 
         when total_transactions = 1 and (nb_casiers = 0 or (nb_casiers = 1 and user_id_subscription is not null)) and recence < 90 then 'Premiere transaction'
-        when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or user_type.user_status_ = 'Ancien Abonne') and recence < 90 then 'Client Boutique'
-        when total_transactions > 1 and total_subscriptions > 0 and user_type.user_status = 'subscriber' then 'Abonné' 
-        when total_transactions > 1 and total_ca_global > 2000 and user_type.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 or pan_moy > 100 then 'Client Promoteur'
-        when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'Méga-Abonné'
+        when total_transactions > 1 and total_shop > 0 and  (total_subscriptions = 0 or subscription_final_data.user_status_ = 'Ancien Abonne') and recence < 90 then 'Client Boutique'
+        when total_transactions > 1 and total_subscriptions > 0 and subscription_final_data.user_status = 'subscriber' then 'Abonné' 
+        when total_transactions > 1 and total_ca_global > 2000 and subscription_final_data.user_status = 'subscriber' and nb_casiers > 25 or nb_godsons > 10 or pan_moy > 100 then 'Client Promoteur'
+        when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status = 'subscriber' then 'Méga-Abonné'
         when (
-          user_type.user_status_ = 'Ancien Abonne' 
+          subscription_final_data.user_status_ = 'Ancien Abonne' 
           and (
             last_shop_date < last_subscription_date
             --& add: pas d'achat boutique après résilliation dans les 3 derniers mois
@@ -232,12 +268,14 @@ result as (
           then 'Ancien client'
         else 'Autres' end as user_phase_transaction,
     
+    ifnull(subscription_final_data.user_status_, 'Sans Abonnement') as user_status_,
+
     case
-      when user_type.user_status_ = 'Abonne' then 'subscriber'
-      when user_type.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer'
-      when user_type.user_status_ = 'Ancien Abonne' and recence > 90 then '92366307'
-      when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and user_type.user_status = 'subscriber' then 'other' 
-      else user_status
+      when subscription_final_data.user_status_ = 'Abonne' then 'subscriber' -- subscriber = Abonne
+      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer' -- customer = Client
+      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence > 90 then '92366307' -- 92366307 = Ancien client
+      when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status = 'subscriber' then 'other'  -- other = Mega-Abonne
+      else 'lead' -- lead = Lead
     end as user_status,
     
     case 
@@ -253,17 +291,15 @@ result as (
         when localisation = 'Hors IdF' and place_openings_day = 'Samedi' then 'Vendredi'
         end as place_openings_day_preparation, 
         ca_global_stripe - refund_global_stripe as reel_ca_global_stripe,
+    
     case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type
   
   FROM user_data 
-  LEFT JOIN current_subscription ON user_data.user_id = current_subscription.user_id_subscription
+  LEFT JOIN subscription_final_data ON user_data.user_id = subscription_final_data.user_id_subscription
   LEFT JOIN sale_data ON user_data.user_id = sale_data.user_id_sale_data
   left join users_coupons on user_data.customer_id_stripe = users_coupons.customer
-  left join user_type on user_data.user_id = user_type.user_type_user_id
   left join stripe_ca_refund on user_data.customer_id_stripe = stripe_ca_refund.stripe_customer_id
   left join users_discount on user_data.customer_id_stripe = users_discount.discount_user_id 
-  left join users_first_subscriptions on user_data.user_id = users_first_subscriptions.users_first_id
-  -- left join cp_source on user_data.user_id = cp_source.user_id_cp
   ORDER BY user_id asc 
 )
 

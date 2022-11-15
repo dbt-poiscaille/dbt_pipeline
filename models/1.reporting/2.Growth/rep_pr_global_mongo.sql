@@ -124,7 +124,7 @@ with
 
 select 
    place_consolidation.*,
-  'Utilisateur B2B' as contact_type,
+  'Point Relais' as contact_type,
   nombre_50_per_cent,
   place_name,
   place_owner,
