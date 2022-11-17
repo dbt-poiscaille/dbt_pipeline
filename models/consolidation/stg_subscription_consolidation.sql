@@ -32,7 +32,8 @@ SELECT
   allergies_fishes  ,
   allergies_others ,
   allergies_invalid,
-  unsubscribed_reason
+  unsubscribed_reason,
+  _sdc_sequence
 from
    {{ ref('src_mongodb_subscriptions')}}  
 
