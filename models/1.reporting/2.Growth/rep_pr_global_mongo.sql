@@ -5,10 +5,10 @@
    )
 }}
 
-with 
-  place_consolidation as (
+with
+  place_sale_consolidation as (
     select
-      place_id, 
+      place_id as sale_place_id, 
       COUNT (DISTINCT(case when type_sale = 'Abonnement' then user_id end)) AS nb_subscribers,
       round(sum(case when type_sale = 'Abonnement' then sale_locker_ttc end ),2) as total_ca_subscriptions,
       round(sum(case when type_sale = 'Boutique' then sale_boutique_ttc  end ),2) as total_ca_shop,
@@ -111,66 +111,57 @@ with
     case when nom_region = 'Île-de-France' then 'IDF' else 'Région' end as place_location,
     'France' as place_country, 
     'PR' as place_type
-  FROM {{ ref('stg_mongo_sale_consolidation') }} 
-  ),
-
-  place_data_src as (
-    select distinct
-      pr_email,
-      pr_statut_lead,
-      hs_lead_status
-    from {{ ref('stg_mongo_vs_hubspot') }}
+  FROM {{ ref('stg_mongo_place_consolidation') }} 
   )
 
 select 
-   place_consolidation.*,
+  place_info.*,
+  place_sale_consolidation.*,
   'Point Relais' as contact_type,
   nombre_50_per_cent,
-  place_name,
-  place_owner,
-  place_phone,
-  place_city,
-  place_address,
-  place_codepostal,
-  place_email,
-  place_coupon,
-  place_lng,
-  place_lat,
-  place_geocode,
-  place_createdat,
-  shipping_pickup,
-  shipping_delay,
-  place_company,
-  place_coupon_users,
-  place_coupon_amount,
-  shipping_company,
-  days_since_in_bdd,
-  months_since_in_bdd,
-  year_since_in_bdd,
-  type_livraison,
-  place_storage,
-  place_icebox,
-  place_pickup,
-  place_openings_schedule,
-  place_openings_hidden,
-  place_openings_day,
-  place_openings_depositschedule,
-  nom_departement,
-  nom_region,
-  zone,
-  place_location,
-  place_country,
-  place_type,
-  pr_statut_lead,
-  hs_lead_status
-from place_consolidation
-left join place_info
-on place_consolidation.place_id = place_info.place_id 
+
+  -- place_name,
+  -- place_owner,
+  -- place_phone,
+  -- place_city,
+  -- place_address,
+  -- place_codepostal,
+  -- place_email,
+  -- place_coupon,
+  -- place_lng,
+  -- place_lat,
+  -- place_geocode,
+  -- place_createdat,
+  -- shipping_pickup,
+  -- shipping_delay,
+  -- place_company,
+  -- place_coupon_users,
+  -- place_coupon_amount,
+  -- shipping_company,
+  -- days_since_in_bdd,
+  -- months_since_in_bdd,
+  -- year_since_in_bdd,
+  -- type_livraison,
+  -- place_storage,
+  -- place_icebox,
+  -- place_pickup,
+  -- place_openings_schedule,
+  -- place_openings_hidden,
+  -- place_openings_day,
+  -- place_openings_depositschedule,
+  -- nom_departement,
+  -- nom_region,
+  -- zone,
+  -- place_location,
+  -- place_country,
+  -- place_type,
+
+from place_info
+left join place_sale_consolidation
+on place_sale_consolidation.sale_place_id = place_info.place_id 
 left join place_discount
-on place_consolidation.place_id = place_discount.discount_place_id
-left join place_data_src
-on place_data_src.pr_email = place_info.place_email
-order by place_consolidation.place_id asc 
+on place_info.place_id = place_discount.discount_place_id
+order by place_info.place_id asc 
   
 
 
