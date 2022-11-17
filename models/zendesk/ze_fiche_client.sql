@@ -42,10 +42,12 @@ select
        else true end as allergies_others,
   allergies_invalid,
   case when newsletter is null then false else true end as newsletter,
-  case when refund_global_stripe is null then 0 else refund_global_stripe end as refund_global_stripe,
+  case when refund_global_stripe is null then 0 else cast(refund_global_stripe as int64) end as refund_global_stripe,
   case when user_id_subscription is null then 'No Subscription' else user_id_subscription end as user_id_subscription,
   customer_id_stripe,
-  unsubscribed_reason
+  unsubscribed_reason,
+  
+  format_date('%A %C %B %G',next_locker_date) as next_locker_date
 from {{ ref('rep_clients_kpi_mongo') }} 
 --where user_status != 'lead' 
 order by user_id asc 
