@@ -37,8 +37,8 @@ from
 ),
 
 -- Récupération des abonnements 
-subscription AS (
-SELECT 
+subscription_raw_data AS (
+SELECT
   user_id as user_id_subscription,
   id as subscription_id,
   allergies_oysters,
@@ -52,6 +52,7 @@ SELECT
   subscription_status,
   formula as subscription_formula,
   rate,
+  _sdc_sequence,
   cast(startingat as date) as subscription_startingat,
   cast(lastingat as date) as subscription_lastingat,
 
@@ -70,11 +71,21 @@ SELECT
        when rate = 'monthly' then 'Livraison chaque mois'
   end as subscription_type,
   unsubscribed_reason,
+
+  -- order data by user id and subscription id to select the most recent data of each
   ROW_NUMBER() OVER (
-        PARTITION BY user_id
-        ORDER BY subscription_date_mongo DESC
+        PARTITION BY user_id,id
+        ORDER BY _sdc_sequence DESC
     ) rn
 FROM {{ ref('stg_subscription_consolidation') }}
+),
+
+-- only get subscription data with rn = 1, i.e the most recent record for each subscription
+subscription as (
+  select
+    *
+  from subscription_raw_data
+  where rn = 1
 ),
 
 subscription_w_next_date_data AS (
@@ -110,15 +121,27 @@ count_active_subscription as (
   and subscription_formula = 'subscription'
   group by 1
 ),
+-- select the most recent active subscription to be showed
+
+active_subscription_rn as (
+  select
+    *,
+    row_number() over (
+      partition by user_id_subscription
+      order by _sdc_sequence desc
+    ) as rn_current_subscription
+  from subscription
+  where 
+    subscription_status = 'Active'
+    and subscription_formula = 'subscription'
+),
 
 current_subscription as (
   select distinct
     *
-  from subscription_w_next_date_data
+  from active_subscription_rn
   where 
-    subscription_formula = 'subscription'
-    and subscription_status = 'Active'
-    and rn = 1
+    rn_current_subscription = 1
 ),
 
 -- Récupération de la première date de souscription
@@ -244,7 +267,7 @@ sale_data AS (
 -- ),
 
 result as (
-  SELECT * except (user_status,user_status_,next_locker_date_temp,rn),
+  SELECT * except (user_status,user_status_,rn,rn_current_subscription, subscription_type),
     'France' as country, 
 
     case 
@@ -268,16 +291,24 @@ result as (
           then 'Ancien client'
         else 'Autres' end as user_phase_transaction,
     
-    ifnull(subscription_final_data.user_status_, 'Sans Abonnement') as user_status_,
+    case
+      when subscription_final_data.user_status_ is null then 'Sans Abonnement'
+      else subscription_final_data.user_status_
+    end as user_status_,
 
     case
       when subscription_final_data.user_status_ = 'Abonne' then 'subscriber' -- subscriber = Abonne
       when subscription_final_data.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer' -- customer = Client
       when subscription_final_data.user_status_ = 'Ancien Abonne' and recence > 90 then '92366307' -- 92366307 = Ancien client
-      when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status = 'subscriber' then 'other'  -- other = Mega-Abonne
+      -- when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status_ = 'Abonne' then 'other'  -- other = Mega-Abonne
       else 'lead' -- lead = Lead
     end as user_status,
     
+    case
+      when subscription_status = 'Active' then subscription_type
+      else null
+    end as subscription_type,
+
     case 
         when localisation = 'Ile-de-France' and place_openings_day = 'Jeudi' then 'Jeudi'    
         when localisation = 'Ile-de-France' and place_openings_day = 'Vendredi' then 'Vendredi'    
@@ -305,7 +336,7 @@ result as (
 
 select * from result
 -- where last_shop_date is not null
--- and user_id = '5ee60116895fb442ebeadccf'
+-- where user_id = '5ee60116895fb442ebeb201c'
 
 
 
