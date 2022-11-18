@@ -125,23 +125,57 @@ count_active_subscription as (
 
 active_subscription_rn as (
   select
-    *,
+    *
+    except (subscription_status),
+    'Active' as subscription_status,
     row_number() over (
       partition by user_id_subscription
       order by _sdc_sequence desc
     ) as rn_current_subscription
   from subscription
   where 
-    subscription_status = 'Active'
-    and subscription_formula = 'subscription'
+    subscription_formula = 'subscription'
+    -- User can have more than one subscription, it need to filter on active subscription in case the user cancel the most recent subscription (in that case the other subscriptions still active)
+    and subscription_status = 'Active'
 ),
 
-current_subscription as (
+current_active_subscription as (
   select distinct
     *
   from active_subscription_rn
   where 
     rn_current_subscription = 1
+),
+
+current_cancelled_subscription_rn as (
+  select
+    * except (subscription_status),
+    case
+      when user_id_subscription not in (select distinct user_id_subscription from current_active_subscription) then 'Cancelled'
+    end as subscription_status,
+    row_number() over (
+      partition by user_id_subscription
+      order by _sdc_sequence desc
+    ) as rn_cancelled_subscription
+  from subscription
+  where 
+    subscription_status = 'Cancelled'
+    and subscription_formula = 'subscription'
+),
+
+current_cancelled_subscription as (
+  select
+    *,
+  from current_cancelled_subscription_rn
+  where rn_cancelled_subscription = 1
+  and subscription_status = 'Cancelled'
+  -- case subscription_status = null i.e client cancelled one of their active subscriptions
+),
+
+current_subscription as (
+  select * from current_active_subscription
+  union all
+  select * from current_cancelled_subscription
 ),
 
 -- Récupération de la première date de souscription
@@ -299,7 +333,7 @@ result as (
     case
       when subscription_final_data.user_status_ = 'Abonne' then 'subscriber' -- subscriber = Abonne
       when subscription_final_data.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer' -- customer = Client
-      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence > 90 then '92366307' -- 92366307 = Ancien client
+      when subscription_final_data.user_status_ = 'Ancien Abonne' and (recence > 90 or recence is null) then '92366307' -- 92366307 = Ancien client
       -- when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status_ = 'Abonne' then 'other'  -- other = Mega-Abonne
       else 'lead' -- lead = Lead
     end as user_status,
