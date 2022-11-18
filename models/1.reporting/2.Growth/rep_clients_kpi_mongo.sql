@@ -107,7 +107,9 @@ FROM subscription
 next_locker_date_final as (
   select 
     user_id_subscription,
-    min(case when next_locker_date_temp > current_date() then next_locker_date_temp end) as next_locker_date
+    min(
+      case when next_locker_date_temp >= current_date() and subscription_status = 'Active' then next_locker_date_temp end
+    ) as next_locker_date
   from subscription_w_next_date_data
   group by 1
 ),
@@ -357,7 +359,16 @@ result as (
         end as place_openings_day_preparation, 
         ca_global_stripe - refund_global_stripe as reel_ca_global_stripe,
     
-    case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type
+    case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type,
+
+    -- key dates
+    date_add(next_locker_date, interval 1 day) as next_locker_preparation_date,
+    case
+      when place_name <> 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 1 day) -- Point relais
+      when place_name = 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 2 day) -- Domicile
+      when localisation <> 'Ile-de-France' then date_add(next_locker_date, interval 2 day)
+      else date_add(next_locker_date, interval 2 day)
+    end as next_locker_shipping_date,
   
   FROM user_data 
   LEFT JOIN subscription_final_data ON user_data.user_id = subscription_final_data.user_id_subscription
