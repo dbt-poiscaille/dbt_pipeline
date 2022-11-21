@@ -103,6 +103,7 @@ sale_data_ttc_bonus as (
     
     case
       when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
+      when type_sale = 'Abonnement' and 'Petit plus' in (select distinct type_sale from sale_data s1 where s1.sale_id = sale_data.sale_id) then round(cast(subscription_price as float64)/100,2)
       when type_sale = 'Abonnement' then round(cast(price_ttc_raw as float64)/100,2) 
       when type_sale = 'Petit plus' then round(cast(price_ttc_raw - subscription_price as float64)/100,2)  
     end as price_ttc,
@@ -111,7 +112,7 @@ sale_data_ttc_bonus as (
       when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
     end as sale_boutique_ttc,
     case 
-      when type_sale = 'Abonnement' and 'Petit plus' in (select type_sale from sale_data s1 where s1.sale_id = sale_data.sale_id) then round(cast(subscription_price as float64)/100,2)
+      when type_sale = 'Abonnement' and 'Petit plus' in (select distinct type_sale from sale_data s1 where s1.sale_id = sale_data.sale_id) then round(cast(subscription_price as float64)/100,2)
       when type_sale = 'Abonnement' then round(cast(price_ttc_raw as float64)/100,2) 
     end as sale_locker_ttc,
     case
