@@ -46,6 +46,7 @@ with ze_data_client as (
           case when user_id_subscription is null then 'No Subscription' else user_id_subscription end as user_id_subscription,
           customer_id_stripe,
           unsubscribed_reason,
+          avg_score_command_client,
 
           -- Date du prochain choix de casier
           format_date('%e ',next_locker_date) as date_next_locker_date,
