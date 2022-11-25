@@ -60,7 +60,8 @@ with
         select
             *,
             case
-                when portion_unit <> 'gram' then ifnull((SAFE_CAST(max_caliber as int64) + SAFE_CAST(min_caliber as int64))/2,SAFE_CAST(min_caliber as int64))*portion_quantity
+                when portion_unit = 'piece' then ifnull((SAFE_CAST(max_caliber as int64) + SAFE_CAST(min_caliber as int64))/2,SAFE_CAST(min_caliber as int64))*portion_quantity
+                when portion_unit = 'pieceAsDozen' then 1000
                 else portion_quantity
             end as portion_quantity_caliber
         from sale_data_detail
@@ -68,7 +69,7 @@ with
     ),
 
     sale_date_score_conso_init as (
-        select
+        select distinct
             sale.*,
             product_type_conso,
             product_score,
