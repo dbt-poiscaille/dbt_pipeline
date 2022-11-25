@@ -86,4 +86,6 @@ select
   offerings_value_items_value_description
 from
   {{ ref('src_mongodb_sale') }}
+  where status is null
+    or status = 'paid'
 

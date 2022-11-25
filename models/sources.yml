@@ -40,6 +40,7 @@ sources:
     tables:
       - name: communes_departement_region
       - name: nomenclature_cp_final
+      - name: data_score_conso
     
   - name: stripe
     loader: BigQuery

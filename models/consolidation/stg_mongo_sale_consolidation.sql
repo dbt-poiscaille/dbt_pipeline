@@ -202,6 +202,8 @@ result as (
     place_openings_depositschedule,
     nom_departement,
     nom_region,
+    case when nom_region is null then 'Livraison Domicile' else nom_region end as place_region,
+    case when nom_region = 'Île-de-France' then 'IDF' else 'Region' end as region_type,
     zone,
     ifnull(user_status_, 'Sans Abonnement') as user_status_
   FROM sale_data_final 

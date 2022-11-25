@@ -249,6 +249,7 @@ group by 1
 sale_data AS (
      SELECT distinct
         user_id as user_id_sale_data, 
+
         case when date_diff( current_date(), max(sale_date), day) > 90 then 'Churn' else 'Retain' end as customer_status,         
         date_diff(current_date(), max(sale_date) ,day) as recence, 
         date_diff(current_date(), min(sale_date) ,day) as anciennete,    
@@ -284,6 +285,7 @@ sale_data AS (
         round(sum(sale_total_ttc)/count(distinct sale_id),2) as pan_moy,
         round((sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct case when type_sale = 'shop' or type_sale = 'Petit plus' then sale_id end)),2) as panier_moyen_hors_casier_1,
         round(sum(case when type_sale = 'shop' or type_sale = 'Petit plus' then price_ttc end )/count( distinct sale_id),2) as panier_moyen_hors_casier_2,
+        round(avg(avg_command_score),1) as avg_score_command_client,
         
         FROM {{ ref('stg_mongo_sale_consolidation') }}
         group by 1),
