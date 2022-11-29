@@ -110,7 +110,8 @@ with
     zone, 
     case when nom_region = 'Île-de-France' then 'IDF' else 'Région' end as place_location,
     'France' as place_country, 
-    'PR' as place_type
+    'PR' as place_type,
+    comment
   FROM {{ ref('stg_mongo_place_consolidation') }} 
   )
 

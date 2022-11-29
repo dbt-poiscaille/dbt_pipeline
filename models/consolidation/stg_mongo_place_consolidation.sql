@@ -34,7 +34,8 @@ select
     closing_from as place_closing_from, 
     shipping.pickup as shipping_pickup,
     shipping.delay as shipping_delay, 
-    shipping.company as shipping_company
+    shipping.company as shipping_company,
+    comment
  from {{ ref('src_mongodb_place') }}
 ) , 
  communes_departement_region AS 
@@ -92,6 +93,7 @@ FROM
     shipping_pickup , 
     shipping_delay , 
     place_company,
+    comment,
     code_promo_perf.nb_customer as place_coupon_users,
     code_promo_perf.total_amount as place_coupon_amount,
     shipping_company , 
