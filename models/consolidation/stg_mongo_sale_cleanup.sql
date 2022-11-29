@@ -158,7 +158,7 @@ select
   coupon_value,
   coupon_name,
   coupon_source,
-  avg_product_sccore,
+  avg_product_score,
   avg_display_score,
   avg_method_score,
   avg_command_score

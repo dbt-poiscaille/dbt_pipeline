@@ -90,7 +90,7 @@ with
         select 
             transaction_id,
             type_sale,
-            round(safe_divide(sum(ifnull(portion_quantity_caliber,0)*product_score), sum(ifnull(portion_quantity_caliber,0))), 1) as avg_product_sccore,
+            round(safe_divide(sum(ifnull(portion_quantity_caliber,0)*product_score), sum(ifnull(portion_quantity_caliber,0))), 1) as avg_product_score,
             round(safe_divide(sum(ifnull(portion_quantity_caliber,0)*display_score), sum(ifnull(portion_quantity_caliber,0))), 1) as avg_display_score,
             round(safe_divide(sum(ifnull(portion_quantity_caliber,0)*method_score), sum(ifnull(portion_quantity_caliber,0))), 1) as avg_method_score,
         from sale_date_score_conso_init
@@ -100,7 +100,7 @@ with
     result as (
         select
             *,
-            round(avg_product_sccore + avg_display_score + avg_method_score,1) as avg_command_score
+            round(avg_product_score + avg_display_score + avg_method_score,1) as avg_command_score
         from sale_data_score_detail
         order by transaction_id
     )
