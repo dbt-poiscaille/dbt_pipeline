@@ -39,7 +39,7 @@ sources:
     database: poiscaille-358510
     tables:
       - name: communes_departement_region
-      - name: nomenclature_cp_final
+      - name: code_promo_dictionary
       - name: data_score_conso
     
   - name: stripe
