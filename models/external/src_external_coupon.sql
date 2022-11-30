@@ -7,4 +7,4 @@
 
 select
   *
-from {{ source('external', 'nomenclature_cp_final') }}
+from {{ source('external', 'code_promo_dictionary') }}
