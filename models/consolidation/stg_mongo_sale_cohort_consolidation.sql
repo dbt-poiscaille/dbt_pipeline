@@ -61,6 +61,13 @@ contact_cohort as (
         _id as user_id,
         cast(createdat as date) as contact_createdat
     from {{ ref('src_mongodb_users') }}
+),
+
+user_coupon_source as (
+  select distinct
+    customer as user_id,
+    coupon_source
+  from {{ ref('stg_coupons_users_consolidation') }}
 )
 
 select distinct
@@ -70,10 +77,12 @@ select distinct
     extract(month from first_purchase_date) as first_purchase_month,
     extract(year from first_purchase_date) as first_purchase_year,
     date_diff(sale_consolidation.sale_date,first_purchase_date,month) as months_from_first_purchase,
-
+    coupon_source
 
 from sale_consolidation
 left join contact_cohort
 on sale_consolidation.user_id = contact_cohort.user_id
 left join t_first_purchase
 on sale_consolidation.user_id = t_first_purchase.user_id
+left join user_coupon_source
+on sale_consolidation.user_id = user_coupon_source.user_id
