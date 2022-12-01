@@ -107,7 +107,7 @@ next_locker_date_data as (
     user_id_subscription,
     min(next_locker_preparation_date) as next_locker_preparation_date,
     min(next_locker_delivery_date) as next_locker_delivery_date
-  from subscription
+  from subscription_raw_data
   group by 1
 ),
 
