@@ -19,10 +19,7 @@ with sale_data as (
         end as subscription_type,
         offerings_value_channel,
         channel,
-        CASE WHEN channel = 'shop' THEN 'Boutique'
-            WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-            WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-        END AS type_sale,
+        type_sale,
         offerings_value_id, 
         offerings_value_name,
         offerings_value_items_value_product_type as sale_product_type,

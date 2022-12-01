@@ -21,10 +21,7 @@ select
   offerings_value_price_ht,
   subscription_price,
   subscription_id,
-  CASE WHEN channel = 'shop' THEN 'Boutique'
-    WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-    WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-  end as sale_type,
+  type_sale as sale_type,
   margin,
   margin__fl, 
   price_ttc, 
