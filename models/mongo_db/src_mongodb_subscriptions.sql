@@ -61,8 +61,10 @@ select
   upcoming.deposit.code.delivery AS upcoming_deposit_code_delivery,
   upcoming.deposit.code.collecting AS upcoming_deposit_code_collecting,
   upcoming.deposit.reference AS upcoming_deposit_reference,
+  upcoming.deliveryat as upcoming_deliveryat, 
+  upcoming.shippingat as upcoming_shippingat,
+  unsubscribed.reason as unsubscribed_reason,
   coupon,
-  unsubscribed.reason as unsubscribed_reason
   from {{ source('mongodb', 'subscription') }}
 order by id asc 
 

@@ -33,11 +33,9 @@ SELECT
   allergies_others ,
   allergies_invalid,
   unsubscribed_reason,
+  upcoming_deliveryat,
+  upcoming_shippingat,
+  
   _sdc_sequence
 from
    {{ ref('src_mongodb_subscriptions')}}  
-
-
-
-
-

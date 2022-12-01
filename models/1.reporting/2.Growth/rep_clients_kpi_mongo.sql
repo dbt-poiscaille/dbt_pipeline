@@ -52,6 +52,8 @@ SELECT
   subscription_status,
   formula as subscription_formula,
   rate,
+  cast(upcoming_shippingat as date) as next_locker_preparation_date,
+  cast(upcoming_deliveryat as date) as next_locker_delivery_date,
   _sdc_sequence,
   cast(startingat as date) as subscription_startingat,
   cast(lastingat as date) as subscription_lastingat,
@@ -88,32 +90,6 @@ subscription as (
   where rn = 1
 ),
 
-subscription_w_next_date_data AS (
-SELECT 
-  *,
-  case
-    when subscription_lastingat > current_date() then subscription_lastingat
-    when subscription_startingat is not null and subscription_formula = 'uniq' then subscription_startingat
-    when subscription_formula = 'subscription' and subscription_startingat >= current_date() then subscription_startingat
-    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'weekly' then date_add(subscription_startingat, INTERVAL 7*(DIV(date_diff(current_date(), subscription_startingat, DAY),7)+1) DAY)
-    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'biweekly' then date_add(subscription_startingat, INTERVAL 14*(DIV(date_diff(current_date(), subscription_startingat, DAY),14)+1) DAY)
-    when subscription_formula = 'subscription' and subscription_startingat < current_date() and rate = 'monthly' then date_add(subscription_startingat, INTERVAL 28*(DIV(date_diff(current_date(), subscription_startingat, DAY),28)+1) DAY)
-    else null
-  end as next_locker_date_temp
-FROM subscription 
-),
-
--- Case when 1 user have many abo, the next locker date is the nearest one among the subscriptions
-next_locker_date_final as (
-  select 
-    user_id_subscription,
-    min(
-      case when next_locker_date_temp >= current_date() and subscription_status = 'Active' then next_locker_date_temp end
-    ) as next_locker_date
-  from subscription_w_next_date_data
-  group by 1
-),
-
 count_active_subscription as (
   select
     user_id_subscription,
@@ -123,8 +99,19 @@ count_active_subscription as (
   and subscription_formula = 'subscription'
   group by 1
 ),
--- select the most recent active subscription to be showed
 
+-- select the nearest upcoming date as next locker date
+
+next_locker_date_data as (
+  select distinct
+    user_id_subscription,
+    min(next_locker_preparation_date) as next_locker_preparation_date,
+    min(next_locker_delivery_date) as next_locker_delivery_date
+  from subscription
+  group by 1
+),
+
+-- select the most recent active subscription to be showed
 active_subscription_rn as (
   select
     *
@@ -175,9 +162,12 @@ current_cancelled_subscription as (
 ),
 
 current_subscription as (
-  select * from current_active_subscription
-  union all
-  select * from current_cancelled_subscription
+  select * except (next_locker_preparation_date,next_locker_delivery_date) 
+  from current_active_subscription
+
+  union all 
+  select * except (next_locker_preparation_date,next_locker_delivery_date) 
+  from current_cancelled_subscription
 ),
 
 -- Récupération de la première date de souscription
@@ -195,13 +185,14 @@ from
 subscription_final_data as (
   select
     current_subscription.*,
-    next_locker_date,
     current_active_subscriptions,
-    min_subscribed
+    min_subscribed,
+    next_locker_preparation_date,
+    next_locker_delivery_date
   from current_subscription
   left join count_active_subscription on current_subscription.user_id_subscription = count_active_subscription.user_id_subscription
-  left join next_locker_date_final on current_subscription.user_id_subscription = next_locker_date_final.user_id_subscription
   left join users_first_subscriptions on current_subscription.user_id_subscription = users_first_subscriptions.users_first_id
+  left join next_locker_date_data on current_subscription.user_id_subscription = next_locker_date_data.user_id_subscription
 ),
 
 -- Récupération et consolidation des coupons
@@ -364,13 +355,16 @@ result as (
     case when place_name = 'Livraison à domicile' then 'Domicile' else 'Point Relais' end as  place_type,
 
     -- key dates
-    date_add(next_locker_date, interval 1 day) as next_locker_preparation_date,
-    case
-      when place_name <> 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 1 day) -- Point relais
-      when place_name = 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 2 day) -- Domicile
-      when localisation <> 'Ile-de-France' then date_add(next_locker_date, interval 2 day)
-      else date_add(next_locker_date, interval 2 day)
-    end as next_locker_shipping_date,
+
+    date_sub(next_locker_preparation_date, interval 1 day) as next_locker_choice_date,
+
+    -- date_add(next_locker_date, interval 1 day) as next_locker_preparation_date,
+    -- case
+    --   when place_name <> 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 1 day) -- Point relais
+    --   when place_name = 'Livraison à domicile' and localisation = 'Ile-de-France' then date_add(next_locker_date, interval 2 day) -- Domicile
+    --   when localisation <> 'Ile-de-France' then date_add(next_locker_date, interval 2 day)
+    --   else date_add(next_locker_date, interval 2 day)
+    -- end as next_locker_delivery_date,
   
   FROM user_data 
   LEFT JOIN subscription_final_data ON user_data.user_id = subscription_final_data.user_id_subscription
