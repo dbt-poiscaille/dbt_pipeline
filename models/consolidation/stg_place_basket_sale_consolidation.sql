@@ -37,10 +37,7 @@ select
   subscription_total_casiers,
   channel,
   offerings_value_channel,
-  CASE WHEN channel = 'shop' THEN 'Boutique'
-      WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-      WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-  END AS type_sale,  
+  type_sale,  
   round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
   offerings_value_price_tax,
   offerings_value_price_ht,

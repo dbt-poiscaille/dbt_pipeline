@@ -36,10 +36,7 @@ with
     sale_data_detail as (
         SELECT DISTINCT 
             sale_id as transaction_id ,
-            CASE WHEN channel = 'shop' THEN 'Boutique'
-                WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-                WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-            END AS type_sale,  
+            type_sale,  
             offerings_value_name as panier , 
             offerings_value_items_value_product_name as product ,
             offerings_value_items_value_product_id as product_id,

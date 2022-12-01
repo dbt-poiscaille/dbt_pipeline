@@ -42,10 +42,7 @@ WITH
       subscription_total_casiers,
       channel,
       offerings_value_channel,
-      CASE WHEN channel = 'shop' THEN 'Boutique'
-          WHEN  channel = 'combo' and offerings_value_channel = 'combo' THEN 'Abonnement'
-          WHEN  channel = 'combo' and offerings_value_channel = 'shop' THEN 'Petit plus'
-      END AS type_sale,  
+      type_sale, 
       round(cast(offerings_value_price_ttc as int64)/100,2) as price_details_ttc,
       offerings_value_price_ttc,
       offerings_value_price_tax,
@@ -59,6 +56,7 @@ WITH
       --invoiceitemid,
       --chargeid,
       status, 
+
     FROM  {{ ref('src_mongodb_sale') }} 
     where status is null
     or status = 'paid'
@@ -67,7 +65,6 @@ WITH
 
   sale_data_ttc_bonus as (
     select distinct
-
       shippingat,
       shipping_date,
       sale_date,
@@ -103,6 +100,7 @@ WITH
       
       case
         when type_sale = 'Boutique' then round(cast(offerings_value_price_ttc*offerings_value_count as float64)/100,2)
+        when type_sale = 'Abonnement' and 'Petit plus' in (select type_sale from sale_data s1 where s1.sale_id = sale_data.sale_id) then round(cast(subscription_price as float64)/100,2)
         when type_sale = 'Abonnement' then round(cast(price_ttc_raw as float64)/100,2) 
         when type_sale = 'Petit plus' then round(cast(price_ttc_raw - subscription_price as float64)/100,2)  
       end as price_ttc,
@@ -152,7 +150,7 @@ WITH
     from {{ ref('stg_external_score_conso_data') }}
   )
 
-select 
+select distinct
   sale_data_ttc_bonus.*,
   IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc,
   coupon_value,
