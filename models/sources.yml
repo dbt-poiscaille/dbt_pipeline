@@ -136,3 +136,12 @@ sources:
         tags: ['Hubspot']
   
   
+  - name: funnel
+    loader: BigQuery
+    schema: media_export_hanalitycs
+    database: poiscaille-358510
+    tables:
+      - name: media_data
+        tags: ['Funnel Data']
+  
+  
