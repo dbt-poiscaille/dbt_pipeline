@@ -25,6 +25,7 @@ SELECT DISTINCT
     offerings_value_items_value_meta_caliber as caliber,
     offerings_value_items_value_description as description,
     offerings_value_items_value_image_url as image_url,
+    round(cast(offerings_value_price_ttc as int64)/100,2) as unit_price
 
 FROM {{ ref('stg_detail_products_sales') }}
 ORDER BY sale_id
