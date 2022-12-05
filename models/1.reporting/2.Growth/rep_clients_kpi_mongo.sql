@@ -107,7 +107,20 @@ next_locker_date_data as (
     user_id_subscription,
     min(case when next_locker_preparation_date > CURRENT_DATE() then next_locker_preparation_date end) as next_locker_preparation_date,
     min(case when next_locker_delivery_date > CURRENT_DATE() then next_locker_delivery_date end) as next_locker_delivery_date
-  from subscription_raw_data
+  from
+    (
+      select
+        user_id_subscription,
+        next_locker_preparation_date,
+        next_locker_delivery_date,
+        ROW_NUMBER() OVER (
+          PARTITION BY user_id_subscription,subscription_id
+          ORDER BY _sdc_sequence DESC
+        ) as rn
+      from
+        subscription_raw_data
+    )
+  where rn = 1
   group by 1
 ),
 
