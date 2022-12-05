@@ -40,24 +40,14 @@ with
   cp_source as (
     select distinct
       customer,
-      first_value(coupon_source) over (partition by customer order by count_cp_src desc) as coupon_source,
-    from (
-      select
-        customer,
-        coupon_source,
-        count(coupon_source) as count_cp_src
-      from data_cp_with_src
-      group by 1,2
-    )
+      first_value(coupon_source) over (partition by customer order by in_date asc) as coupon_source,
+      first_value(coupon_name) over (partition by customer order by in_date asc) as first_coupon_name,
+    from data_cp_with_src
   )
 
 select 
   data_cp.customer,
-  case
-    when coupon_source = 'Remises Stripe' then 'Stripe'
-    when coupon_source = 'Influenceurs & partenaires' then 'Influenceurs'
-    else coupon_source
-  end as coupon_source,
+  coupon_source,
   count(distinct description) as nb_coupons,
   round(sum(in_amount)/100,2) as coupons_amount, 
   SPLIT(max(description), ' ')[OFFSET(1)] as last_coupon,
