@@ -8,6 +8,9 @@
 select distinct
     date_add(cast(delivery.shippingat as date), interval 1 day) as sale_date,
     _id as sale_id,
+    user._id as user_id, 
+    user.email as user_email,
+    concat('https://poiscaille.fr/kraken/client/', user._id) as link,
     payment.status as payment_status,
     payment.price.ht/100 as payment_price_ht,
     payment.price.ttc/100 as payment_price_ttc,
