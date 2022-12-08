@@ -340,18 +340,20 @@ result as (
 
     case
       when subscription_final_data.user_status_ = 'Abonne' then 'subscriber' -- subscriber = Abonne
-      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence <= 90 then 'customer' -- customer = Client
+      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence is not null and recence <= 90 then 'customer' -- customer = Client
       when subscription_final_data.user_status_ = 'Ancien Abonne' and (recence > 90 or recence is null) then '92366307' -- 92366307 = Ancien client
-      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 then 'customer'
+      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 and recence <= 90 then 'customer'
+      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 and (recence > 90 or recence is null) then '92366307'
       -- when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status_ = 'Abonne' then 'other'  -- other = Mega-Abonne
       else 'lead' -- lead = Lead
     end as user_status,
     
     case
       when subscription_final_data.user_status_ = 'Abonne' then 'Abonné' -- subscriber = Abonne
-      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence <= 90 then 'Client' -- customer = Client
+      when subscription_final_data.user_status_ = 'Ancien Abonne' and recence is not null and recence <= 90 then 'Client' -- customer = Client
       when subscription_final_data.user_status_ = 'Ancien Abonne' and (recence > 90 or recence is null) then 'Ancien client' -- 92366307 = Ancien client
-      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 then 'Client'
+      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 and recence <= 90 then 'Client'
+      when subscription_final_data.user_status_ is null and ca_global_stripe > 0 and (recence > 90 or recence is null) then 'Ancien client'
       -- when total_transactions > 1 and total_ca_global > 4000 and amount_refunded < 200 and subscription_final_data.user_status_ = 'Abonne' then 'other'  -- other = Mega-Abonne
       else 'Lead' -- lead = Lead
     end as user_status_fr,
@@ -401,8 +403,6 @@ result as (
 select * from result
 -- where last_shop_date is not null
 -- where user_id = '5ee60116895fb442ebeb201c'
-
-
 
 
 
