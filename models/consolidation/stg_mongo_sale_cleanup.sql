@@ -53,9 +53,13 @@ WITH
       -- offerings_value_items_value_product_name,
       --offerings_value_items_value_product_id,
       --offerings_value_items_value_product_type,
-      --invoiceitemid,
+      invoiceitemid,
       --chargeid,
       status, 
+
+      coupon_name, 
+      coupon_source, 
+      coupon_id
 
     FROM  {{ ref('src_mongodb_sale') }} 
     where status is null
@@ -95,6 +99,9 @@ WITH
       offerings_value_channel,
       type_sale,  
       subscription_price,
+      coupon_name, 
+      coupon_source, 
+      coupon_id,
       --chargeid,
       -- status, 
       
@@ -119,30 +126,43 @@ WITH
     from sale_data
   ),
 
-  data_cp as (
-    SELECT
-      in_date,
-      in_id,
-      in_invoice,
-      in_subscription_id,
-      round(in_amount/100,2) as coupon_value,
-      customer,
-      description,
-      SPLIT(description, ' ')[OFFSET(1)] as coupon_name
-    FROM
-      {{ ref('src_stripe_invoice_items') }}
-    WHERE
-      description LIKE 'Coupon%'
-  ),
+  -- sale_invoice_item as (
+  --   select distinct
+  --     sale_id,
+  --     invoiceitemid
+  --   from sale_data
+  -- ),
 
-  data_cp_with_src as (
-    select
-      data_cp.*,
-      Type as coupon_source
-    from data_cp
-    left join {{ ref('src_external_coupon') }} src_cp
-    on data_cp.coupon_name = src_cp.coupon
-  ),
+  -- data_cp as (
+  --   SELECT
+  --     in_date,
+  --     in_id,
+  --     in_invoice,
+  --     in_subscription_id,
+  --     round(in_amount/100,2) as coupon_value,
+  --     customer,
+  --     description,
+  --     SPLIT(description, ' ')[OFFSET(1)] as coupon_name
+  --   FROM
+  --     {{ ref('src_stripe_invoice_items') }}
+  --   WHERE
+  --     description LIKE 'Coupon%'
+  -- ),
+
+  -- data_cp_with_src as (
+  --   select
+  --     -- data_cp.*,
+  --     sale_id,
+  --     coupon_name,
+  --     coupon_value,
+  --     max(Type) as coupon_source
+  --   from sale_invoice_item
+  --   left join data_cp
+  --   on data_cp.in_invoice = sale_invoice_item.invoiceitemid
+  --   left join {{ ref('src_external_coupon') }} src_cp
+  --   on data_cp.coupon_name = src_cp.coupon
+  --   group by 1,2,3
+  -- ),
 
   data_score_conso as (
     select
@@ -153,18 +173,16 @@ WITH
 select distinct
   sale_data_ttc_bonus.*,
   IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc,
-  coupon_value,
-  coupon_name,
-  coupon_source,
   avg_product_score,
   avg_display_score,
   avg_method_score,
   avg_command_score
 from sale_data_ttc_bonus
-left join data_cp_with_src
-on 
-  sale_data_ttc_bonus.sale_date = data_cp_with_src.in_date
-  AND sale_data_ttc_bonus.customerid = data_cp_with_src.customer
+-- left join data_cp_with_src
+-- on 
+--   sale_data_ttc_bonus.sale_id = data_cp_with_src.sale_id
+  -- sale_data_ttc_bonus.sale_date = data_cp_with_src.in_date
+  -- AND sale_data_ttc_bonus.customerid = data_cp_with_src.customer
 left join data_score_conso
 on
   sale_data_ttc_bonus.sale_id = data_score_conso.transaction_id

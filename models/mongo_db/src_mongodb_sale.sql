@@ -57,6 +57,10 @@ SELECT
   offerings.value.items AS offerings_value_items,
   --offerings.value.refunded AS  offerings_value_refunded,
 
+  payment.coupon.code as coupon_name, 
+  payment.coupon.type as coupon_source, 
+  payment.coupon._id as coupon_id,
+
   CASE WHEN channel = 'shop' THEN 'Boutique'
     WHEN  channel = 'combo' and offerings.value.channel = 'combo' THEN 'Abonnement'
     WHEN  channel = 'combo' and offerings.value.channel = 'shop' THEN 'Petit plus'
