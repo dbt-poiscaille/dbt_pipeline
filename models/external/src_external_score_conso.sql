@@ -8,6 +8,6 @@
 select distinct
   produit as product,
   type,
-  cast(replace(code, ',', '.') as float64) as score
+  cast(code as float64) as score
 from {{ source('external', 'data_score_conso') }}
 where produit is not null
