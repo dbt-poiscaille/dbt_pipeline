@@ -61,6 +61,7 @@ from {{ ref('stg_ga_petitplus_tunnel') }}
 )
 
 select 
+  distinct
  * 
  from shop_funnel 
  left join subscription_funnel

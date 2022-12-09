@@ -12,6 +12,7 @@
 with data_consolidation as (
 
 SELECT
+  distinct 
   cast(createdat as date) as date,
    updatedat,
   _id as sale_id,
@@ -22,7 +23,9 @@ SELECT
   coupon.freedelivery,
   coupon.code,
   payment.price.ttc,
+  payment.price.ttc/100 as price_ttc,
   payment.paidprice,
+  payment.paidprice/100 as paidprice_tcc,
    RANK() OVER ( PARTITION BY  _id ORDER BY cast(updatedat as date) desc  ) AS rank
 FROM
   {{ source('mongodb', 'gift_cards') }}
