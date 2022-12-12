@@ -72,9 +72,9 @@ SELECT
 
 FROM sale_product_detail
 left join score_data_product 
-on trim(lower(score_data_product.product), ' ') like concat('%', trim(lower(sale_product_detail.product), ' '), '%')
+on trim(lower(score_data_product.product), ' ') = concat(trim(lower(sale_product_detail.product), ' '))
 left join score_data_method 
-on trim(lower(score_data_method.method),' ') like concat('%', trim(lower(sale_product_detail.method),' '), '%')
+on trim(lower(score_data_method.method),' ') = concat(trim(lower(sale_product_detail.method),' '))
 left join score_data_display 
-on trim(lower(score_data_display.display),' ') like concat('%', trim(lower(sale_product_detail.display),' '), '%')
+on trim(lower(score_data_display.display),' ') = concat(trim(lower(sale_product_detail.display),' '))
 ORDER BY transaction_id

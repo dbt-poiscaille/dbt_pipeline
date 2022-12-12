@@ -126,6 +126,22 @@ sources:
         meta:
           contains_pii: true
           owner : "Sales & SAV"
+      - name: coupon_usage
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"
+      - name: coupon
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"       
+      - name: gift_cards
+        tags: ['MongoDb']
+        meta:
+          contains_pii: true
+          owner : "Sales & SAV"        
+                              
 
   - name: hubspot
     loader: BigQuery

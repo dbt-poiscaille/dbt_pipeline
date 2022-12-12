@@ -76,11 +76,11 @@ with
             method_score
         from sale_date_portion_quantity as sale
         left join score_data_product 
-        on trim(lower(score_data_product.product), ' ') like concat('%', trim(lower(sale.product), ' '), '%')
+        on trim(lower(score_data_product.product), ' ') = concat(trim(lower(sale.product), ' '))
         left join score_data_method 
-        on trim(lower(score_data_method.method),' ') like concat('%', trim(lower(sale.method),' '), '%')
+        on trim(lower(score_data_method.method),' ') = concat(trim(lower(sale.method),' '))
         left join score_data_display 
-        on trim(lower(score_data_display.display),' ') like concat('%', trim(lower(sale.display),' '), '%')
+        on trim(lower(score_data_display.display),' ') = concat(trim(lower(sale.display),' '))
     ),
 
     sale_data_score_detail as (
