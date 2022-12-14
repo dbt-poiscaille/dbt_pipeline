@@ -35,7 +35,7 @@ SELECT
   unsubscribed_reason,
   upcoming_deliveryat,
   upcoming_shippingat,
-  
+  updatedat,
   _sdc_sequence
 from
    {{ ref('src_mongodb_subscriptions')}}  
