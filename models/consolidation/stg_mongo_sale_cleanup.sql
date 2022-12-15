@@ -126,43 +126,50 @@ WITH
     from sale_data
   ),
 
-  -- sale_invoice_item as (
-  --   select distinct
-  --     sale_id,
-  --     invoiceitemid
-  --   from sale_data
-  -- ),
+  final_sale_data as (
+    select
+      shippingat,
+      shipping_date,
+      sale_date,
+      first_day_week,
+      last_day_week,        
+      sale_id,
+      type_sale,
+      place_id,
+      company, 
+      firstname,
+      lastname,
+      phone,
+      user_id,
+      email,
+      createdat,
+      subscription_id,
+      shipping_addresse,
+      shipping_city,
+      shipping_codepostal,
+      price_ttc_raw,
+      amount_refund,
+      customerid,
+      subscriptionid, 
+      subscription_rate,
+      subscription_status,
+      subscription_type,   
+      subscription_total_casiers,
+      -- channel,
+      -- offerings_value_channel,
+      -- subscription_price,
+      coupon_name, 
+      coupon_source, 
+      coupon_id,
 
-  -- data_cp as (
-  --   SELECT
-  --     in_date,
-  --     in_id,
-  --     in_invoice,
-  --     in_subscription_id,
-  --     round(in_amount/100,2) as coupon_value,
-  --     customer,
-  --     description,
-  --     SPLIT(description, ' ')[OFFSET(1)] as coupon_name
-  --   FROM
-  --     {{ ref('src_stripe_invoice_items') }}
-  --   WHERE
-  --     description LIKE 'Coupon%'
-  -- ),
-
-  -- data_cp_with_src as (
-  --   select
-  --     -- data_cp.*,
-  --     sale_id,
-  --     coupon_name,
-  --     coupon_value,
-  --     max(Type) as coupon_source
-  --   from sale_invoice_item
-  --   left join data_cp
-  --   on data_cp.in_invoice = sale_invoice_item.invoiceitemid
-  --   left join {{ ref('src_external_coupon') }} src_cp
-  --   on data_cp.coupon_name = src_cp.coupon
-  --   group by 1,2,3
-  -- ),
+      sum(price_ttc) as price_ttc,
+      sum(sale_boutique_ttc) as sale_boutique_ttc,
+      sum(sale_locker_ttc) as sale_locker_ttc,
+      sum(sale_bonus_ttc) as sale_bonus_ttc,
+    
+    from sale_data_ttc_bonus
+    group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30
+  ),
 
   data_score_conso as (
     select
@@ -171,19 +178,14 @@ WITH
   )
 
 select distinct
-  sale_data_ttc_bonus.*,
+  final_sale_data.*,
   IFNULL(sale_bonus_ttc,0)+IFNULL(sale_boutique_ttc,0)+IFNULL(sale_locker_ttc,0) as sale_total_ttc,
   avg_product_score,
   avg_display_score,
   avg_method_score,
   avg_command_score
-from sale_data_ttc_bonus
--- left join data_cp_with_src
--- on 
---   sale_data_ttc_bonus.sale_id = data_cp_with_src.sale_id
-  -- sale_data_ttc_bonus.sale_date = data_cp_with_src.in_date
-  -- AND sale_data_ttc_bonus.customerid = data_cp_with_src.customer
+from final_sale_data
 left join data_score_conso
 on
-  sale_data_ttc_bonus.sale_id = data_score_conso.transaction_id
-  and sale_data_ttc_bonus.type_sale = data_score_conso.type_sale
+  final_sale_data.sale_id = data_score_conso.transaction_id
+  and final_sale_data.type_sale = data_score_conso.type_sale
