@@ -29,8 +29,10 @@ with
     select
       data_cp.*,
       case
-        when Type is not null then Type
         when Type is null and coupon_name like '%@%' then 'Parrainage'
+        when Type is null and (coupon_name like 'POISSONFRANÇAIS%' or coupon_name like 'POISSONFRANCAIS%') then 'Carte-cadeau'
+        when Type is not null then Type
+        else Type
       end as coupon_source
     from data_cp
     left join {{ ref('src_external_coupon') }} src_cp
