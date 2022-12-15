@@ -105,8 +105,10 @@ count_active_subscription as (
 next_locker_date_data as (
   select distinct
     user_id_subscription,
-    min(case when next_locker_preparation_date > CURRENT_DATE() then next_locker_preparation_date end) as next_locker_preparation_date,
-    min(case when next_locker_delivery_date > CURRENT_DATE() then next_locker_delivery_date end) as next_locker_delivery_date
+    -- min(next_locker_preparation_date) as next_locker_preparation_date,
+    -- min(next_locker_delivery_date) as next_locker_delivery_date
+    min(case when next_locker_preparation_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY) then next_locker_preparation_date end) as next_locker_preparation_date,
+    min(case when next_locker_delivery_date >= CURRENT_DATE() then next_locker_delivery_date end) as next_locker_delivery_date
   from
     (
       select
