@@ -24,8 +24,8 @@ with subscription_raw_data as (
         rate,
         quantity,
         unsubscribed_reason,
-        upcoming_deliveryat,
-        upcoming_shippingat,
+        date(upcoming_shippingat,'Europe/Paris') as upcoming_shippingat,
+        date(upcoming_deliveryat, 'Europe/Paris') as upcoming_deliveryat,
         updatedat,
         _sdc_sequence,
         row_number() over (partition by id order by _sdc_sequence desc) as rn
