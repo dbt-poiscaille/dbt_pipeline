@@ -47,6 +47,11 @@ select
   offerings_value_items_value_product_name,
   offerings_value_items_value_product_id,
   offerings_value_items_value_product_type,
+  offerings_value_items_value_supplier_harbor_name as harbor_name,
+  offerings_value_items_value_supplier_name as supplier_name,
+  offerings_value_items_value_meta_method as method,
+  offerings_value_items_value_meta_display_name as display,
+  offerings_value_items_value_meta_display_packaging as packaging,
   
   FROM  {{ ref('src_mongodb_sale') }} 
   order by subscription_total_casiers asc 
