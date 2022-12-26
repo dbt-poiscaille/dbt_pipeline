@@ -39,13 +39,13 @@ select
     abonnement_poiscaille___googleads__adwords as subscriptions,
     achat_poiscaille___googleads__adwords as purchases,
     null as website_purchases, 
-    null as website_subscriptions, 
+    abonnement_poiscaille___googleads__adwords as website_subscriptions, 
     null as clicks_links, 
     cost__adwords as spend, 
     clicks__adwords as clicks_all,   
     Impressions__AdWords as impressions,
     all_conv__value__achat_poiscaille___googleads__adwords as website_purchase_value, 
-    all_conv__value__abonnement_poiscaille___googleads__adwords as website_subscription_value,
+    conv__value__abonnement_poiscaille___googleads__adwords as website_subscription_value,
     conv__value__achat_poiscaille___googleads__adwords as purchase_value,
     conv__value__abonnement_poiscaille___googleads__adwords as subscription_value 
 from {{ source('funnel', 'media_data') }}
