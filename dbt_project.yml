@@ -34,5 +34,18 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   poiscaille_data_pipeline:
     # Applies to all files under models/example/
-    example:
-      materialized: view
+    # example:
+    #   materialized: view
+
+    1.reporting:
+      O.Fiance:
+        +schema: Finance
+      1.Marketing:
+        +schema: Marketing
+      2.Growth:
+        +schema: Growth
+      3.Point_Relais:
+        +schema: Point_Relais
+      5.Approvisionnement:
+        +schema: Approvisionnement
+      
